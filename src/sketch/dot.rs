@@ -15,23 +15,23 @@ pub struct Dot {
 
 #[hot]
 pub fn handle_sketch_dot(
-    commands: Commands,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<StandardMaterial>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     cursor: Res<Cursor>,
 ) {
     if !mouse_input.just_pressed(MouseButton::Left) {
         return;
     }
-    spawn_dot(commands, meshes, materials, cursor.position);
+    spawn_dot(&mut commands, &mut meshes, &mut materials, cursor.position);
 }
 
 #[hot]
 pub fn spawn_dot(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
     position: Vec3,
 ) {
     commands.spawn((
@@ -47,5 +47,4 @@ pub fn spawn_dot(
         },
         Transform::from_translation(position),
     ));
-    println!("spawned dot at {:?}", position);
 }

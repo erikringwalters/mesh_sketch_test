@@ -3,7 +3,7 @@ use crate::cursor::Cursor;
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::*;
 
-use super::dot::handle_sketch_dot;
+use super::{dot::handle_sketch_dot, line::handle_sketch_line};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
 // use super::circle::{CirclePlugin, handle_sketch_circle};
@@ -64,14 +64,17 @@ fn change_sketch_mode(
     } else if keyboard.just_pressed(KeyCode::KeyD) {
         reset_sketch(current_sketch, line_chain);
         state.set(SketchMode::Dot);
+    } else if keyboard.just_pressed(KeyCode::KeyS) {
+        reset_sketch(current_sketch, line_chain);
+        state.set(SketchMode::Line);
     }
 }
 
 #[hot]
 fn handle_sketch(
-    commands: Commands,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<StandardMaterial>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     state: Res<State<SketchMode>>,
     cursor: Res<Cursor>,
@@ -81,6 +84,17 @@ fn handle_sketch(
     match state.get() {
         SketchMode::Dot => {
             handle_sketch_dot(commands, meshes, materials, mouse_input, cursor);
+        }
+        SketchMode::Line => {
+            handle_sketch_line(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                mouse_input,
+                cursor,
+                current_sketch,
+                line_chain,
+            );
         }
         _ => {
             return;
