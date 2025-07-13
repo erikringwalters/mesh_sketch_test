@@ -3,7 +3,10 @@ use crate::cursor::Cursor;
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::*;
 
-use super::{dot::handle_sketch_dot, line::handle_sketch_line};
+use super::{
+    dot::{DotMeshHandle, DotPlugin, handle_sketch_dot},
+    line::handle_sketch_line,
+};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
 // use super::circle::{CirclePlugin, handle_sketch_circle};
@@ -47,6 +50,7 @@ impl Plugin for SketchPlugin {
         app.init_state::<SketchMode>()
             .insert_resource(CurrentSketch::default())
             .insert_resource(LineChain::default())
+            .add_plugins(DotPlugin)
             .add_systems(Update, (change_sketch_mode, handle_sketch).chain());
     }
 }
@@ -73,7 +77,7 @@ fn change_sketch_mode(
 #[hot]
 fn handle_sketch(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
+    dot_mesh: Res<DotMeshHandle>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     state: Res<State<SketchMode>>,
@@ -83,12 +87,12 @@ fn handle_sketch(
 ) {
     match state.get() {
         SketchMode::Dot => {
-            handle_sketch_dot(commands, meshes, materials, mouse_input, cursor);
+            handle_sketch_dot(commands, &dot_mesh, materials, mouse_input, cursor);
         }
         SketchMode::Line => {
             handle_sketch_line(
                 &mut commands,
-                &mut meshes,
+                &dot_mesh,
                 &mut materials,
                 mouse_input,
                 cursor,

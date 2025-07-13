@@ -38,10 +38,4 @@ pub fn setup(
     ));
 
     commands.spawn((DirectionalLight::default(), Reloadable::default()));
-
-    commands.spawn((
-        Mesh3d(meshes.add(Cone::new(0.5, 1.))),
-        MeshMaterial3d(materials.add(Color::srgba(0.1, 0.4, 0.4, 0.0))),
-        Reloadable::default(),
-    ));
 }

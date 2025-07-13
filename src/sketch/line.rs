@@ -7,7 +7,7 @@ use crate::{
 };
 
 use super::{
-    dot::{Dot, spawn_dot},
+    dot::{Dot, DotMeshHandle, spawn_dot},
     sketch::{CurrentSketch, DEFAULT_POS, LineChain, reset_sketch},
 };
 
@@ -20,7 +20,7 @@ pub struct Line {
 #[hot]
 pub fn handle_sketch_line(
     commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
+    dot_mesh: &Res<DotMeshHandle>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     cursor: Res<Cursor>,
@@ -50,9 +50,9 @@ pub fn handle_sketch_line(
     // Create line and dots entities if both start and end are defined
     if start != DEFAULT_POS && end != DEFAULT_POS {
         if line_chain.count == 0 {
-            spawn_dot(commands, meshes, materials, start);
+            spawn_dot(commands, dot_mesh, materials, start);
         }
-        spawn_dot(commands, meshes, materials, end);
+        spawn_dot(commands, dot_mesh, materials, end);
 
         commands.spawn((
             Line {
