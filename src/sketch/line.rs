@@ -7,7 +7,8 @@ use crate::{
 };
 
 use super::{
-    dot::{Dot, DotMeshHandle, spawn_dot},
+    dot::{DotMeshHandle, spawn_dot},
+    size::LINE_WIDTH,
     sketch::{CurrentSketch, DEFAULT_POS, LineChain, reset_sketch},
 };
 
@@ -17,10 +18,26 @@ pub struct Line {
     pub end: Vec3,
 }
 
+#[derive(Resource, Debug)]
+pub struct LineMeshHandle(pub Handle<Mesh>);
+
+pub struct LinePlugin;
+
+impl Plugin for LinePlugin {
+    fn build(&self, app: &mut App) {
+        let mesh_handle = app
+            .world_mut()
+            .resource_mut::<Assets<Mesh>>()
+            .add(Cylinder::new(LINE_WIDTH * 0.5, LINE_WIDTH));
+        app.insert_resource(LineMeshHandle(mesh_handle));
+    }
+}
+
 #[hot]
 pub fn handle_sketch_line(
     commands: &mut Commands,
     dot_mesh: &Res<DotMeshHandle>,
+    line_mesh: &Res<LineMeshHandle>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     cursor: Res<Cursor>,
@@ -38,6 +55,13 @@ pub fn handle_sketch_line(
     // Define start of line
     if current_sketch.position[0] == DEFAULT_POS {
         current_sketch.position[0] = cursor.position;
+        // spawn_line(
+        //     commands,
+        //     line_mesh,
+        //     materials,
+        //     current_sketch.position[0],
+        //     cursor.position,
+        // );
     }
     // Define end of line
     else if current_sketch.position[1] == DEFAULT_POS {
@@ -54,17 +78,44 @@ pub fn handle_sketch_line(
         }
         spawn_dot(commands, dot_mesh, materials, end);
 
-        commands.spawn((
-            Line {
-                start: start,
-                end: end,
-            },
-            Reloadable {
-                level: ReloadLevel::Hard,
-            },
-        ));
+        // commands.spawn((
+        //     Line {
+        //         start: start,
+        //         end: end,
+        //     },
+        //     Reloadable {
+        //         level: ReloadLevel::Hard,
+        //     },
+        // ));
         current_sketch.position[0] = end;
         current_sketch.position[1] = DEFAULT_POS;
         line_chain.count += 1;
     }
+}
+
+fn spawn_line(
+    commands: &mut Commands,
+    line_mesh: &Res<LineMeshHandle>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    start: Vec3,
+    end: Vec3,
+) -> Entity {
+    commands
+        .spawn((
+            Line {
+                start: start,
+                end: end,
+            },
+            Mesh3d(line_mesh.0.clone()),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgba(1., 1., 1., 1.),
+                unlit: true,
+                ..default()
+            })),
+            Transform::from_translation(start).looking_at(Vec3::ZERO, Dir3::Y),
+            Reloadable {
+                level: ReloadLevel::Hard,
+            },
+        ))
+        .id()
 }

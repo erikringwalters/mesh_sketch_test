@@ -20,11 +20,7 @@ fn main() {
 }
 
 #[hot]
-pub fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
+pub fn setup(mut commands: Commands) {
     commands.spawn((
         Camera3d::default(),
         Projection::from(OrthographicProjection {

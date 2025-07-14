@@ -5,7 +5,7 @@ use bevy_simple_subsecond_system::*;
 
 use super::{
     dot::{DotMeshHandle, DotPlugin, handle_sketch_dot},
-    line::handle_sketch_line,
+    line::{LineMeshHandle, handle_sketch_line},
 };
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
@@ -23,18 +23,20 @@ pub enum SketchMode {
     Arc,
 }
 
-pub const DEFAULT_RESOLUTION: u32 = 64;
+// pub const DEFAULT_RESOLUTION: u32 = 64;
 pub const DEFAULT_POS: Vec3 = Vec3::splat(f32::MIN);
 
 #[derive(Resource, Debug, PartialEq)]
 pub struct CurrentSketch {
     pub position: [Vec3; 3],
+    pub lines: Vec<Entity>,
 }
 
 impl Default for CurrentSketch {
     fn default() -> Self {
         CurrentSketch {
             position: [DEFAULT_POS, DEFAULT_POS, DEFAULT_POS],
+            lines: Vec::new(),
         }
     }
 }
@@ -78,6 +80,7 @@ fn change_sketch_mode(
 fn handle_sketch(
     mut commands: Commands,
     dot_mesh: Res<DotMeshHandle>,
+    line_mesh: Res<LineMeshHandle>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     state: Res<State<SketchMode>>,
@@ -93,6 +96,7 @@ fn handle_sketch(
             handle_sketch_line(
                 &mut commands,
                 &dot_mesh,
+                &line_mesh,
                 &mut materials,
                 mouse_input,
                 cursor,

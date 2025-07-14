@@ -30,8 +30,6 @@ impl Plugin for ReloadPlugin {
 fn handle_reload(
     input: Res<ButtonInput<KeyCode>>,
     mut commands: Commands,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<StandardMaterial>>,
     query: Query<(Entity, &Reloadable)>,
     current_sketch: ResMut<CurrentSketch>,
     line_chain: ResMut<LineChain>,
@@ -48,7 +46,7 @@ fn handle_reload(
             }
         }
         sketch::reset_sketch(current_sketch, line_chain);
-        setup(commands, meshes, materials);
+        setup(commands);
         let message = if reload_level == ReloadLevel::Soft {
             "Soft reloaded."
         } else {
