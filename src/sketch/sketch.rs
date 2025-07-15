@@ -5,7 +5,7 @@ use bevy_simple_subsecond_system::*;
 
 use super::{
     dot::{DotMeshHandle, DotPlugin, handle_sketch_dot},
-    line::{LineMeshHandle, handle_sketch_line},
+    line::{LineMeshHandle, LinePlugin, handle_sketch_line},
 };
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
@@ -53,6 +53,7 @@ impl Plugin for SketchPlugin {
             .insert_resource(CurrentSketch::default())
             .insert_resource(LineChain::default())
             .add_plugins(DotPlugin)
+            .add_plugins(LinePlugin)
             .add_systems(Update, (change_sketch_mode, handle_sketch).chain());
     }
 }
