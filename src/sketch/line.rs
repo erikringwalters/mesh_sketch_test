@@ -143,15 +143,11 @@ fn handle_current_line(
     if let Ok(mut transform) = lines.get_mut(current_sketch.lines[0]) {
         let a = cursor.position;
         let b = current_sketch.position[0];
-        let angle = (b.y - a.y) / (b.x - a.x);
-        let x = if b.x >= a.x {
-            Vec3::Z * angle + vec3(0., 0., PI / 2.)
-        } else {
-            Vec3::Z * angle - vec3(0., 0., PI / 2.)
-        };
+        let angle = atan((b.y - a.y) / (b.x - a.x));
+        let rot = Vec3::Z * angle + vec3(0., 0., PI / 2.);
+
         transform.translation = (a + b) * 0.5;
         transform.scale.y = (b - a).length();
-        transform.rotation = Quat::from_euler(EulerRot::YXZ, x.x, x.y, x.z);
-        // println!("{:?}", transform.translation);
+        transform.rotation = Quat::from_euler(EulerRot::YXZ, rot.x, rot.y, rot.z);
     }
 }

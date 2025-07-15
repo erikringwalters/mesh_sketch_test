@@ -10,7 +10,7 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Cursor::default())
-            .add_systems(Update, (update_cursor, draw_cursor));
+            .add_systems(Update, update_cursor); //, draw_cursor));
     }
 }
 
