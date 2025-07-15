@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::{math::ops::atan, prelude::*, transform};
 use bevy_simple_subsecond_system::*;
 
@@ -28,7 +30,7 @@ impl Plugin for LinePlugin {
         let mesh_handle = app
             .world_mut()
             .resource_mut::<Assets<Mesh>>()
-            .add(Cylinder::new(LINE_WIDTH, 2.));
+            .add(Cylinder::new(LINE_WIDTH, 1.));
         app.insert_resource(LineMeshHandle(mesh_handle))
             .add_systems(Update, handle_current_line);
     }
@@ -116,7 +118,7 @@ fn spawn_line(
             Transform::from_translation(start).with_rotation(Quat::from_euler(
                 EulerRot::YXZ,
                 0.0,
-                1.0,
+                PI / 2.,
                 0.0,
             )),
             Reloadable {
@@ -139,10 +141,12 @@ fn handle_current_line(
 
     // println!("{:?}", current_sketch.lines[0]);
     if let Ok(mut transform) = lines.get_mut(current_sketch.lines[0]) {
-        transform.translation = (cursor.position + current_sketch.position[0]) * 0.5;
-        transform.scale.y = (current_sketch.position[0] - cursor.position).length();
-        let x = atan(transform.scale.y);
-        // transform.rotation.z = x;
+        let a = cursor.position;
+        let b = current_sketch.position[0];
+        transform.translation = (a + b) * 0.5;
+        transform.scale.y = (b - a).length();
+        let x = (b.y - a.y) / (b.x - a.x);
+        transform.rotation.z = atan(x);
         // println!("{:?}", transform.translation);
     }
 }
