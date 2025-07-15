@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{math::ops::atan, prelude::*, transform};
+use bevy::{math::ops::atan, prelude::*};
 use bevy_simple_subsecond_system::*;
 
 use crate::{
@@ -117,9 +117,9 @@ fn spawn_line(
             })),
             Transform::from_translation(start).with_rotation(Quat::from_euler(
                 EulerRot::YXZ,
-                0.0,
-                PI / 2.,
-                0.0,
+                0.,
+                0., //PI / 2.,
+                0.,
             )),
             Reloadable {
                 level: ReloadLevel::Hard,
@@ -143,10 +143,15 @@ fn handle_current_line(
     if let Ok(mut transform) = lines.get_mut(current_sketch.lines[0]) {
         let a = cursor.position;
         let b = current_sketch.position[0];
+        let angle = (b.y - a.y) / (b.x - a.x);
+        let x = if b.x >= a.x {
+            Vec3::Z * angle + vec3(0., 0., PI / 2.)
+        } else {
+            Vec3::Z * angle - vec3(0., 0., PI / 2.)
+        };
         transform.translation = (a + b) * 0.5;
         transform.scale.y = (b - a).length();
-        let x = (b.y - a.y) / (b.x - a.x);
-        transform.rotation.z = atan(x);
+        transform.rotation = Quat::from_euler(EulerRot::YXZ, x.x, x.y, x.z);
         // println!("{:?}", transform.translation);
     }
 }

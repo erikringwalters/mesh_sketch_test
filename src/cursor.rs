@@ -10,7 +10,7 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Cursor::default())
-            .add_systems(Update, update_cursor); //, draw_cursor));
+            .add_systems(Update, (update_cursor, draw_cursor));
     }
 }
 
@@ -36,7 +36,7 @@ fn update_cursor(
     };
 
     // Calculate if and where the ray is hitting the floor plane.
-    let Some(distance) = ray.intersect_plane(Vec3::ZERO, InfinitePlane3d::new(Dir3::Y)) else {
+    let Some(distance) = ray.intersect_plane(Vec3::ZERO, InfinitePlane3d::new(Dir3::Z)) else {
         return;
     };
     cursor.position = ray.get_point(distance);
@@ -46,8 +46,8 @@ fn update_cursor(
 fn draw_cursor(mut gizmos: Gizmos, cursor: Res<Cursor>) {
     gizmos.circle(
         Isometry3d::new(
-            cursor.position + Dir3::Y * 0.,
-            Quat::from_rotation_arc(Vec3::Z, Dir3::Y.as_vec3()),
+            cursor.position,
+            Quat::from_rotation_arc(Vec3::Z, Dir3::Z.as_vec3()),
         ),
         0.05,
         Color::WHITE,

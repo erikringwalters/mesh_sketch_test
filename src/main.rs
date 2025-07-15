@@ -23,13 +23,13 @@ fn main() {
 pub fn setup(mut commands: Commands) {
     commands.spawn((
         Camera3d::default(),
-        Projection::from(OrthographicProjection {
-            scaling_mode: ScalingMode::FixedVertical {
-                viewport_height: 6.0,
-            },
-            ..OrthographicProjection::default_3d()
-        }),
-        Transform::from_xyz(0., 1., 0.).looking_at(Vec3::ZERO, Dir3::Y),
+        // Projection::from(OrthographicProjection {
+        //     scaling_mode: ScalingMode::FixedVertical {
+        //         viewport_height: 6.0,
+        //     },
+        //     ..OrthographicProjection::default_3d()
+        // }),
+        Transform::from_xyz(0., 0., 10.).looking_at(Vec3::ZERO, Dir3::Y),
         Reloadable::default(),
     ));
 
