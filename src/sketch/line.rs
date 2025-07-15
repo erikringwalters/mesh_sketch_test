@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, transform};
 use bevy_simple_subsecond_system::*;
 
 use crate::{
@@ -9,7 +9,7 @@ use crate::{
 use super::{
     dot::{DotMeshHandle, spawn_dot},
     size::LINE_WIDTH,
-    sketch::{CurrentSketch, DEFAULT_POS, LineChain, reset_sketch},
+    sketch::{CurrentSketch, DEFAULT_POS, LineChain, SketchMode, reset_sketch},
 };
 
 #[derive(Component, Debug, Default)]
@@ -28,8 +28,9 @@ impl Plugin for LinePlugin {
         let mesh_handle = app
             .world_mut()
             .resource_mut::<Assets<Mesh>>()
-            .add(Cylinder::new(LINE_WIDTH * 0.5, LINE_WIDTH));
-        app.insert_resource(LineMeshHandle(mesh_handle));
+            .add(Cylinder::new(LINE_WIDTH, 2.));
+        app.insert_resource(LineMeshHandle(mesh_handle))
+            .add_systems(Update, handle_current_line);
     }
 }
 
@@ -55,17 +56,18 @@ pub fn handle_sketch_line(
     // Define start of line
     if current_sketch.position[0] == DEFAULT_POS {
         current_sketch.position[0] = cursor.position;
-        // spawn_line(
-        //     commands,
-        //     line_mesh,
-        //     materials,
-        //     current_sketch.position[0],
-        //     cursor.position,
-        // );
+        let start = current_sketch.position[0];
+        current_sketch.lines.push(spawn_line(
+            commands,
+            line_mesh,
+            materials,
+            start,
+            cursor.position,
+        ));
     }
     // Define end of line
     else if current_sketch.position[1] == DEFAULT_POS {
-        current_sketch.position[1] = cursor.position
+        current_sketch.position[1] = cursor.position;
     }
 
     let start = current_sketch.position[0];
@@ -77,22 +79,21 @@ pub fn handle_sketch_line(
             spawn_dot(commands, dot_mesh, materials, start);
         }
         spawn_dot(commands, dot_mesh, materials, end);
-
-        // commands.spawn((
-        //     Line {
-        //         start: start,
-        //         end: end,
-        //     },
-        //     Reloadable {
-        //         level: ReloadLevel::Hard,
-        //     },
-        // ));
+        current_sketch.lines.clear();
+        current_sketch.lines.push(spawn_line(
+            commands,
+            line_mesh,
+            materials,
+            end,
+            cursor.position,
+        ));
         current_sketch.position[0] = end;
         current_sketch.position[1] = DEFAULT_POS;
         line_chain.count += 1;
     }
 }
 
+#[hot]
 fn spawn_line(
     commands: &mut Commands,
     line_mesh: &Res<LineMeshHandle>,
@@ -112,10 +113,28 @@ fn spawn_line(
                 unlit: true,
                 ..default()
             })),
-            Transform::from_translation(start).looking_at(Vec3::ZERO, Dir3::Y),
+            Transform::from_translation(start).looking_at(Vec3::ZERO, Dir3::Z),
             Reloadable {
                 level: ReloadLevel::Hard,
             },
         ))
         .id()
+}
+
+#[hot]
+fn handle_current_line(
+    current_sketch: ResMut<CurrentSketch>,
+    cursor: Res<Cursor>,
+    state: Res<State<SketchMode>>,
+    mut lines: Query<(&mut Transform, &Line)>,
+) {
+    if state.get() != &SketchMode::Line || current_sketch.lines.is_empty() {
+        return;
+    }
+
+    println!("{:?}", current_sketch.lines[0]);
+    if let Ok((mut transform, line)) = lines.get_mut(current_sketch.lines[0]) {
+        transform.translation = (cursor.position + current_sketch.position[0]) * 0.5;
+        println!("{:?}", transform.translation);
+    }
 }
