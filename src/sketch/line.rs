@@ -115,12 +115,7 @@ fn spawn_line(
                 unlit: true,
                 ..default()
             })),
-            Transform::from_translation(start).with_rotation(Quat::from_euler(
-                EulerRot::YXZ,
-                0.,
-                0., //PI / 2.,
-                0.,
-            )),
+            Transform::from_translation(start),
             Reloadable {
                 level: ReloadLevel::Hard,
             },

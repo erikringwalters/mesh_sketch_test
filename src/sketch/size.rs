@@ -1,2 +1,2 @@
-pub const LINE_WIDTH: f32 = 0.025;
-pub const DOT_RADIUS: f32 = 0.05;
+pub const LINE_WIDTH: f32 = 0.01;
+pub const DOT_RADIUS: f32 = 0.025;

@@ -53,7 +53,7 @@ pub fn spawn_dot(
         Dot { position: position },
         Mesh3d(dot_mesh.0.clone()),
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgba(1., 0.6, 0.6, 1.),
+            base_color: Color::srgba(1., 0.4, 0., 1.),
             unlit: true,
             ..default()
         })),
