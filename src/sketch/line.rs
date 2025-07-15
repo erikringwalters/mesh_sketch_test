@@ -1,4 +1,4 @@
-use bevy::{prelude::*, transform};
+use bevy::{math::ops::atan, prelude::*, transform};
 use bevy_simple_subsecond_system::*;
 
 use crate::{
@@ -113,7 +113,12 @@ fn spawn_line(
                 unlit: true,
                 ..default()
             })),
-            Transform::from_translation(start).looking_at(Vec3::ZERO, Dir3::Z),
+            Transform::from_translation(start).with_rotation(Quat::from_euler(
+                EulerRot::YXZ,
+                0.0,
+                1.0,
+                0.0,
+            )),
             Reloadable {
                 level: ReloadLevel::Hard,
             },
@@ -126,15 +131,18 @@ fn handle_current_line(
     current_sketch: ResMut<CurrentSketch>,
     cursor: Res<Cursor>,
     state: Res<State<SketchMode>>,
-    mut lines: Query<(&mut Transform, &Line)>,
+    mut lines: Query<&mut Transform>,
 ) {
     if state.get() != &SketchMode::Line || current_sketch.lines.is_empty() {
         return;
     }
 
-    println!("{:?}", current_sketch.lines[0]);
-    if let Ok((mut transform, line)) = lines.get_mut(current_sketch.lines[0]) {
+    // println!("{:?}", current_sketch.lines[0]);
+    if let Ok(mut transform) = lines.get_mut(current_sketch.lines[0]) {
         transform.translation = (cursor.position + current_sketch.position[0]) * 0.5;
-        println!("{:?}", transform.translation);
+        transform.scale.y = (current_sketch.position[0] - cursor.position).length();
+        let x = atan(transform.scale.y);
+        // transform.rotation.z = x;
+        // println!("{:?}", transform.translation);
     }
 }
