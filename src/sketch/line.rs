@@ -38,13 +38,13 @@ impl Plugin for LinePlugin {
             .add_systems(
                 Update,
                 (
-                    handle_transform_current_line.run_if(in_state(SketchMode::Line)),
                     handle_sketch_line_cancel.run_if(
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Right)),
                     ),
                     handle_sketch_line_start.run_if(
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
+                    handle_transform_current_line.run_if(in_state(SketchMode::Line)),
                     handle_sketch_line_end.run_if(
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
@@ -71,9 +71,16 @@ pub fn handle_finalize_sketch_line(
     cursor: Res<Cursor>,
     mut current_sketch: ResMut<CurrentSketch>,
     mut line_chain: ResMut<LineChain>,
+    mut lines: Query<&Line>,
 ) {
-    let start = current_sketch.position[0];
-    let end = current_sketch.position[1];
+    let mut start = current_sketch.position[0];
+    let mut end = current_sketch.position[1];
+    if let Ok(line) = lines.get_mut(current_sketch.lines[0]) {
+        start = line.start;
+        end = line.end
+    }
+    // let start = current_sketch.position[0];
+    // let end = current_sketch.position[1];
 
     // Create line and dots entities if both start and end are defined
     if is_defined(start) && is_defined(end) {
@@ -185,6 +192,7 @@ fn spawn_line(
             Reloadable {
                 level: ReloadLevel::Hard,
             },
+            Visibility::Hidden,
         ))
         .id()
 }
@@ -193,21 +201,23 @@ fn spawn_line(
 fn handle_transform_current_line(
     current_sketch: ResMut<CurrentSketch>,
     cursor: Res<Cursor>,
-    mut lines: Query<&mut Transform>,
+    mut lines: Query<(&mut Line, &mut Transform, &mut Visibility)>,
 ) {
     if current_sketch.lines.is_empty() {
         return;
     }
 
-    // println!("{:?}", current_sketch.lines[0]);
-    if let Ok(mut transform) = lines.get_mut(current_sketch.lines[0]) {
-        let a = cursor.position;
-        let b = current_sketch.position[0];
-        let angle = atan((b.y - a.y) / (b.x - a.x)); // TODO: Check for divide by zero 
+    if let Ok((mut line, mut transform, mut visibility)) = lines.get_mut(current_sketch.lines[0]) {
+        line.start = current_sketch.position[0];
+        line.end = cursor.position;
+        let a = line.end;
+        let b = line.start;
+        let angle = atan((b.y - a.y) / (b.x - a.x)); // TODO: Check for divide by zero
         let rot = Vec3::Z * angle + vec3(0., 0., PI / 2.);
 
         transform.translation = (a + b) / 2.;
         transform.scale.y = (b - a).length();
         transform.rotation = Quat::from_euler(EulerRot::YXZ, rot.x, rot.y, rot.z);
+        *visibility = Visibility::Visible;
     }
 }

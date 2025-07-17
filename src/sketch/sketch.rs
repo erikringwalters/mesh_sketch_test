@@ -1,5 +1,3 @@
-use crate::cursor::Cursor;
-
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::*;
 
@@ -47,7 +45,6 @@ pub struct SketchPlugin;
 impl Plugin for SketchPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<SketchMode>()
-            .insert_state(SketchMode::None)
             .insert_resource(CurrentSketch::default())
             .insert_resource(LineChain::default())
             .add_plugins(DotPlugin)
