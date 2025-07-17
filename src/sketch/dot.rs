@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::*;
 
 use crate::{
@@ -6,7 +6,7 @@ use crate::{
     reload::{ReloadLevel, Reloadable},
 };
 
-use super::size::DOT_RADIUS;
+use super::{size::DOT_RADIUS, sketch::SketchMode};
 
 #[derive(Component, Debug, Default)]
 pub struct Dot {
@@ -24,29 +24,29 @@ impl Plugin for DotPlugin {
             .world_mut()
             .resource_mut::<Assets<Mesh>>()
             .add(Sphere::new(DOT_RADIUS));
-        app.insert_resource(DotMeshHandle(mesh_handle));
+        app.insert_resource(DotMeshHandle(mesh_handle)).add_systems(
+            Update,
+            handle_sketch_dot
+                .run_if(in_state(SketchMode::Dot).and(input_just_pressed(MouseButton::Left))),
+        );
     }
 }
 
 #[hot]
 pub fn handle_sketch_dot(
-    mut commands: Commands,
-    dot_mesh: &Res<DotMeshHandle>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mouse_input: Res<ButtonInput<MouseButton>>,
+    commands: Commands,
+    dot_mesh: Res<DotMeshHandle>,
+    materials: ResMut<Assets<StandardMaterial>>,
     cursor: Res<Cursor>,
 ) {
-    if !mouse_input.just_pressed(MouseButton::Left) {
-        return;
-    }
-    spawn_dot(&mut commands, dot_mesh, &mut materials, cursor.position);
+    spawn_dot(commands, dot_mesh, materials, cursor.position);
 }
 
 #[hot]
 pub fn spawn_dot(
-    commands: &mut Commands,
-    dot_mesh: &Res<DotMeshHandle>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    mut commands: Commands,
+    dot_mesh: Res<DotMeshHandle>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     position: Vec3,
 ) {
     commands.spawn((
