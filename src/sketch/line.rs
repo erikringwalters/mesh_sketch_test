@@ -38,10 +38,10 @@ impl Plugin for LinePlugin {
             .add_systems(
                 Update,
                 (
-                    handle_sketch_line_start.run_if(
+                    handle_sketch_line_end.run_if(
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
-                    handle_sketch_line_end.run_if(
+                    handle_sketch_line_start.run_if(
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
                     handle_transform_current_line.run_if(in_state(SketchMode::Line)),
@@ -112,7 +112,7 @@ pub fn handle_sketch_line_start(
 
 #[hot]
 pub fn handle_sketch_line_end(cursor: Res<Cursor>, mut current_sketch: ResMut<CurrentSketch>) {
-    if current_sketch.position[0] == DEFAULT_POS || current_sketch.position[1] != DEFAULT_POS {
+    if !is_defined(current_sketch.position[0]) {
         return;
     }
     current_sketch.position[1] = cursor.position;
@@ -157,8 +157,12 @@ pub fn handle_finalize_sketch_line(
     mut line_chain: ResMut<LineChain>,
     mut lines: Query<&Line>,
 ) {
+    if !is_defined(current_sketch.position[1]) {
+        return;
+    }
     if let Ok(line) = lines.get_mut(current_sketch.lines[0]) {
         let end = line.end;
+        println!("lines: {:?}", current_sketch.lines[0]);
         current_sketch.lines.clear();
         current_sketch.lines.push(spawn_line(
             commands,
@@ -167,6 +171,7 @@ pub fn handle_finalize_sketch_line(
             end,
             cursor.position,
         ));
+        println!("lines: {:?}", current_sketch.lines[0]);
         current_sketch.position[0] = end;
         current_sketch.position[1] = DEFAULT_POS;
         line_chain.count += 1;
