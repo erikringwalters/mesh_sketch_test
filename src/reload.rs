@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::hot;
 
 use crate::{
@@ -22,7 +22,14 @@ pub struct ReloadPlugin;
 
 impl Plugin for ReloadPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_reload);
+        app.add_systems(
+            Update,
+            (
+                handle_reload.run_if(input_just_pressed(KeyCode::Delete)),
+                handle_setup.run_if(input_just_pressed(KeyCode::Delete)),
+            )
+                .chain(),
+        );
     }
 }
 
@@ -34,7 +41,7 @@ fn handle_reload(
     current_sketch: ResMut<CurrentSketch>,
     line_chain: ResMut<LineChain>,
 ) {
-    if input.pressed(KeyCode::ControlLeft) && input.just_pressed(KeyCode::KeyR) {
+    if input.pressed(KeyCode::ControlLeft) {
         let reload_level = if input.pressed(KeyCode::ShiftLeft) {
             ReloadLevel::Hard
         } else {
@@ -45,13 +52,18 @@ fn handle_reload(
                 commands.entity(entity).despawn();
             }
         }
-        sketch::reset_sketch(current_sketch, line_chain);
-        setup(commands);
+        sketch::reset_current_sketch(commands, current_sketch, line_chain);
         let message = if reload_level == ReloadLevel::Soft {
             "Soft reloaded."
         } else {
             "Hard reloaded."
         };
         println!("{:?}", message);
+    }
+}
+
+fn handle_setup(input: Res<ButtonInput<KeyCode>>, commands: Commands) {
+    if input.pressed(KeyCode::ControlLeft) {
+        setup(commands);
     }
 }

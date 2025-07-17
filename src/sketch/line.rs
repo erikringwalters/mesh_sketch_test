@@ -14,7 +14,7 @@ use super::sketch::is_defined;
 use super::{
     dot::{DotMeshHandle, spawn_dot},
     size::LINE_WIDTH,
-    sketch::{CurrentSketch, DEFAULT_POS, LineChain, SketchMode, reset_sketch},
+    sketch::{CurrentSketch, DEFAULT_POS, LineChain, SketchMode},
 };
 
 #[derive(Component, Debug, Default)]
@@ -38,16 +38,13 @@ impl Plugin for LinePlugin {
             .add_systems(
                 Update,
                 (
-                    handle_sketch_line_cancel.run_if(
-                        in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Right)),
-                    ),
                     handle_sketch_line_start.run_if(
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
-                    handle_transform_current_line.run_if(in_state(SketchMode::Line)),
                     handle_sketch_line_end.run_if(
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
+                    handle_transform_current_line.run_if(in_state(SketchMode::Line)),
                     handle_sketch_start_dot.run_if(
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
@@ -60,41 +57,6 @@ impl Plugin for LinePlugin {
                 )
                     .chain(),
             );
-    }
-}
-
-#[hot]
-pub fn handle_finalize_sketch_line(
-    commands: Commands,
-    line_mesh: Res<LineMeshHandle>,
-    materials: ResMut<Assets<StandardMaterial>>,
-    cursor: Res<Cursor>,
-    mut current_sketch: ResMut<CurrentSketch>,
-    mut line_chain: ResMut<LineChain>,
-    mut lines: Query<&Line>,
-) {
-    let mut start = current_sketch.position[0];
-    let mut end = current_sketch.position[1];
-    if let Ok(line) = lines.get_mut(current_sketch.lines[0]) {
-        start = line.start;
-        end = line.end
-    }
-    // let start = current_sketch.position[0];
-    // let end = current_sketch.position[1];
-
-    // Create line and dots entities if both start and end are defined
-    if is_defined(start) && is_defined(end) {
-        current_sketch.lines.clear();
-        current_sketch.lines.push(spawn_line(
-            commands,
-            line_mesh,
-            materials,
-            end,
-            cursor.position,
-        ));
-        current_sketch.position[0] = end;
-        current_sketch.position[1] = DEFAULT_POS;
-        line_chain.count += 1;
     }
 }
 
@@ -123,18 +85,6 @@ pub fn handle_sketch_end_dot(
 ) {
     if is_defined(current_sketch.position[0]) && is_defined(current_sketch.position[1]) {
         spawn_dot(commands, dot_mesh, materials, current_sketch.position[1]);
-    }
-}
-
-#[hot]
-pub fn handle_sketch_line_cancel(
-    mouse_input: Res<ButtonInput<MouseButton>>,
-    current_sketch: ResMut<CurrentSketch>,
-    line_chain: ResMut<LineChain>,
-) {
-    if mouse_input.just_pressed(MouseButton::Right) {
-        reset_sketch(current_sketch, line_chain);
-        return;
     }
 }
 
@@ -198,6 +148,32 @@ fn spawn_line(
 }
 
 #[hot]
+pub fn handle_finalize_sketch_line(
+    commands: Commands,
+    line_mesh: Res<LineMeshHandle>,
+    materials: ResMut<Assets<StandardMaterial>>,
+    cursor: Res<Cursor>,
+    mut current_sketch: ResMut<CurrentSketch>,
+    mut line_chain: ResMut<LineChain>,
+    mut lines: Query<&Line>,
+) {
+    if let Ok(line) = lines.get_mut(current_sketch.lines[0]) {
+        let end = line.end;
+        current_sketch.lines.clear();
+        current_sketch.lines.push(spawn_line(
+            commands,
+            line_mesh,
+            materials,
+            end,
+            cursor.position,
+        ));
+        current_sketch.position[0] = end;
+        current_sketch.position[1] = DEFAULT_POS;
+        line_chain.count += 1;
+    }
+}
+
+#[hot]
 fn handle_transform_current_line(
     current_sketch: ResMut<CurrentSketch>,
     cursor: Res<Cursor>,
@@ -210,14 +186,18 @@ fn handle_transform_current_line(
     if let Ok((mut line, mut transform, mut visibility)) = lines.get_mut(current_sketch.lines[0]) {
         line.start = current_sketch.position[0];
         line.end = cursor.position;
+
         let a = line.end;
         let b = line.start;
-        let angle = atan((b.y - a.y) / (b.x - a.x)); // TODO: Check for divide by zero
+        let n = b.y - a.y;
+        let d = b.x - a.x;
+        let angle = if d != 0. { atan(n / d) } else { 0. };
         let rot = Vec3::Z * angle + vec3(0., 0., PI / 2.);
 
         transform.translation = (a + b) / 2.;
         transform.scale.y = (b - a).length();
         transform.rotation = Quat::from_euler(EulerRot::YXZ, rot.x, rot.y, rot.z);
+
         *visibility = Visibility::Visible;
     }
 }
