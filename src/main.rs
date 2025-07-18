@@ -1,3 +1,4 @@
+mod color;
 mod cursor;
 mod reload;
 mod sketch;
@@ -11,6 +12,7 @@ use sketch::sketch::SketchPlugin;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(MeshPickingPlugin)
         .add_plugins(SimpleSubsecondPlugin::default())
         .add_plugins(CursorPlugin)
         .add_plugins(ReloadPlugin)

@@ -2,6 +2,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::*;
 
 use crate::{
+    color::*,
     cursor::Cursor,
     reload::{ReloadLevel, Reloadable},
 };
@@ -53,7 +54,7 @@ pub fn spawn_dot(
         Dot { position: position },
         Mesh3d(dot_mesh.0.clone()),
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgba(1., 0.4, 0., 1.),
+            base_color: DOT_COLOR,
             unlit: true,
             ..default()
         })),

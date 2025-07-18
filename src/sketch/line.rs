@@ -5,12 +5,13 @@ use bevy::input::common_conditions::input_just_pressed;
 use bevy::{math::ops::atan, prelude::*};
 use bevy_simple_subsecond_system::*;
 
+use crate::color::*;
 use crate::{
     cursor::Cursor,
     reload::{ReloadLevel, Reloadable},
 };
 
-use super::sketch::is_defined;
+use super::sketch::{is_defined, update_material_on};
 use super::{
     dot::{DotMeshHandle, spawn_dot},
     size::LINE_WIDTH,
@@ -101,6 +102,7 @@ pub fn handle_sketch_line_start(
     }
     current_sketch.position[0] = cursor.position;
     let start = current_sketch.position[0];
+
     current_sketch.lines.push(spawn_line(
         commands,
         line_mesh,
@@ -126,6 +128,10 @@ fn spawn_line(
     start: Vec3,
     end: Vec3,
 ) -> Entity {
+    let default_matl = materials.add(LINE_COLOR);
+    let hover_matl = materials.add(HOVER_COLOR);
+    let pressed_matl = materials.add(PRESSED_COLOR);
+
     commands
         .spawn((
             Line {
@@ -144,6 +150,10 @@ fn spawn_line(
             },
             Visibility::Hidden,
         ))
+        .observe(update_material_on::<Pointer<Over>>(hover_matl.clone()))
+        .observe(update_material_on::<Pointer<Out>>(default_matl.clone()))
+        .observe(update_material_on::<Pointer<Pressed>>(pressed_matl.clone()))
+        .observe(update_material_on::<Pointer<Released>>(hover_matl.clone()))
         .id()
 }
 
@@ -162,7 +172,6 @@ pub fn handle_finalize_sketch_line(
     }
     if let Ok(line) = lines.get_mut(current_sketch.lines[0]) {
         let end = line.end;
-        println!("lines: {:?}", current_sketch.lines[0]);
         current_sketch.lines.clear();
         current_sketch.lines.push(spawn_line(
             commands,
@@ -171,7 +180,6 @@ pub fn handle_finalize_sketch_line(
             end,
             cursor.position,
         ));
-        println!("lines: {:?}", current_sketch.lines[0]);
         current_sketch.position[0] = end;
         current_sketch.position[1] = DEFAULT_POS;
         line_chain.count += 1;
@@ -192,8 +200,8 @@ fn handle_transform_current_line(
         line.start = current_sketch.position[0];
         line.end = cursor.position;
 
-        let a = line.end;
-        let b = line.start;
+        let a = line.start;
+        let b = line.end;
         let n = b.y - a.y;
         let d = b.x - a.x;
         let angle = if d != 0. { atan(n / d) } else { 0. };
