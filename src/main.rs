@@ -1,8 +1,9 @@
-mod color;
+mod assets;
 mod cursor;
 mod reload;
 mod sketch;
 
+use assets::materials::MaterialsPlugin;
 use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy_simple_subsecond_system::*;
 use cursor::CursorPlugin;
@@ -17,6 +18,7 @@ fn main() {
         .add_plugins(CursorPlugin)
         .add_plugins(ReloadPlugin)
         .add_plugins(SketchPlugin)
+        .add_plugins(MaterialsPlugin)
         .add_systems(Startup, setup)
         .run();
 }

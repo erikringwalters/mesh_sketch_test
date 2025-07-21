@@ -5,7 +5,7 @@ use bevy::input::common_conditions::input_just_pressed;
 use bevy::{math::ops::atan, prelude::*};
 use bevy_simple_subsecond_system::*;
 
-use crate::color::*;
+use crate::assets::materials::UIMaterials;
 use crate::{
     cursor::Cursor,
     reload::{ReloadLevel, Reloadable},
@@ -65,7 +65,7 @@ impl Plugin for LinePlugin {
 pub fn handle_sketch_start_dot(
     commands: Commands,
     dot_mesh: Res<DotMeshHandle>,
-    materials: ResMut<Assets<StandardMaterial>>,
+    ui_materials: Res<UIMaterials>,
     current_sketch: ResMut<CurrentSketch>,
     line_chain: ResMut<LineChain>,
 ) {
@@ -73,7 +73,7 @@ pub fn handle_sketch_start_dot(
         && is_defined(current_sketch.position[0])
         && is_defined(current_sketch.position[1])
     {
-        spawn_dot(commands, dot_mesh, materials, current_sketch.position[0]);
+        spawn_dot(commands, dot_mesh, ui_materials, current_sketch.position[0]);
     }
 }
 
@@ -81,11 +81,12 @@ pub fn handle_sketch_start_dot(
 pub fn handle_sketch_end_dot(
     commands: Commands,
     dot_mesh: Res<DotMeshHandle>,
-    materials: ResMut<Assets<StandardMaterial>>,
+    ui_materials: Res<UIMaterials>,
+
     current_sketch: ResMut<CurrentSketch>,
 ) {
     if is_defined(current_sketch.position[0]) && is_defined(current_sketch.position[1]) {
-        spawn_dot(commands, dot_mesh, materials, current_sketch.position[1]);
+        spawn_dot(commands, dot_mesh, ui_materials, current_sketch.position[1]);
     }
 }
 
@@ -93,7 +94,7 @@ pub fn handle_sketch_end_dot(
 pub fn handle_sketch_line_start(
     commands: Commands,
     line_mesh: Res<LineMeshHandle>,
-    materials: ResMut<Assets<StandardMaterial>>,
+    ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
     mut current_sketch: ResMut<CurrentSketch>,
 ) {
@@ -106,7 +107,7 @@ pub fn handle_sketch_line_start(
     current_sketch.lines.push(spawn_line(
         commands,
         line_mesh,
-        materials,
+        ui_materials,
         start,
         cursor.position,
     ));
@@ -124,14 +125,10 @@ pub fn handle_sketch_line_end(cursor: Res<Cursor>, mut current_sketch: ResMut<Cu
 fn spawn_line(
     mut commands: Commands,
     line_mesh: Res<LineMeshHandle>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    ui_materials: Res<UIMaterials>,
     start: Vec3,
     end: Vec3,
 ) -> Entity {
-    let default_matl = materials.add(LINE_COLOR);
-    let hover_matl = materials.add(HOVER_COLOR);
-    let pressed_matl = materials.add(PRESSED_COLOR);
-
     commands
         .spawn((
             Line {
@@ -139,21 +136,25 @@ fn spawn_line(
                 end: end,
             },
             Mesh3d(line_mesh.0.clone()),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgba(1., 1., 1., 1.),
-                unlit: true,
-                ..default()
-            })),
+            MeshMaterial3d(ui_materials.line.clone()),
             Transform::from_translation(start),
             Reloadable {
                 level: ReloadLevel::Hard,
             },
             Visibility::Hidden,
         ))
-        .observe(update_material_on::<Pointer<Over>>(hover_matl.clone()))
-        .observe(update_material_on::<Pointer<Out>>(default_matl.clone()))
-        .observe(update_material_on::<Pointer<Pressed>>(pressed_matl.clone()))
-        .observe(update_material_on::<Pointer<Released>>(hover_matl.clone()))
+        .observe(update_material_on::<Pointer<Over>>(
+            ui_materials.hover.clone(),
+        ))
+        .observe(update_material_on::<Pointer<Out>>(
+            ui_materials.line.clone(),
+        ))
+        .observe(update_material_on::<Pointer<Pressed>>(
+            ui_materials.pressed.clone(),
+        ))
+        .observe(update_material_on::<Pointer<Released>>(
+            ui_materials.hover.clone(),
+        ))
         .id()
 }
 
@@ -161,7 +162,7 @@ fn spawn_line(
 pub fn handle_finalize_sketch_line(
     commands: Commands,
     line_mesh: Res<LineMeshHandle>,
-    materials: ResMut<Assets<StandardMaterial>>,
+    ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
     mut current_sketch: ResMut<CurrentSketch>,
     mut line_chain: ResMut<LineChain>,
@@ -176,7 +177,7 @@ pub fn handle_finalize_sketch_line(
         current_sketch.lines.push(spawn_line(
             commands,
             line_mesh,
-            materials,
+            ui_materials,
             end,
             cursor.position,
         ));
