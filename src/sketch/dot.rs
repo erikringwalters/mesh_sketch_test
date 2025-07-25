@@ -13,13 +13,15 @@ use super::{
 };
 
 #[derive(Component, Debug, Default)]
-pub struct Dot;
-//{
-// pub position: Vec3,
-//}
+pub struct Dot {
+    lines: Vec<Entity>,
+}
 
 #[derive(Resource, Debug)]
 pub struct DotMeshHandle(pub Handle<Mesh>);
+
+// #[derive(Resource, Debug)]
+// pub struct Connected
 
 pub struct DotPlugin;
 
@@ -54,9 +56,9 @@ pub fn spawn_dot(
     ui_materials: Res<UIMaterials>,
     position: Vec3,
 ) {
-    commands
+    let dot = commands
         .spawn((
-            Dot,
+            Dot::default(),
             Mesh3d(dot_mesh.0.clone()),
             MeshMaterial3d(ui_materials.dot.clone()),
             Reloadable {

@@ -7,6 +7,9 @@ edition = "2024"
 bevy = "0.16.1"
 bevy_simple_subsecond_system = "0.2.0"
 
+[feature]
+dev_mode = ["bevy/bevy_dev_tools", "other_dev_tools"]
+
 [profile]
 
 [profile.wasm-dev]

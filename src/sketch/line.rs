@@ -46,10 +46,10 @@ impl Plugin for LinePlugin {
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
                     handle_transform_current_line.run_if(in_state(SketchMode::Line)),
-                    handle_sketch_start_dot.run_if(
+                    handle_sketch_dot_start.run_if(
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
-                    handle_sketch_end_dot.run_if(
+                    handle_sketch_dot_end.run_if(
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
                     handle_finalize_sketch_line.run_if(
@@ -62,7 +62,7 @@ impl Plugin for LinePlugin {
 }
 
 #[hot]
-pub fn handle_sketch_start_dot(
+pub fn handle_sketch_dot_start(
     commands: Commands,
     dot_mesh: Res<DotMeshHandle>,
     ui_materials: Res<UIMaterials>,
@@ -78,11 +78,10 @@ pub fn handle_sketch_start_dot(
 }
 
 #[hot]
-pub fn handle_sketch_end_dot(
+pub fn handle_sketch_dot_end(
     commands: Commands,
     dot_mesh: Res<DotMeshHandle>,
     ui_materials: Res<UIMaterials>,
-
     current_sketch: ResMut<CurrentSketch>,
 ) {
     if is_defined(current_sketch.position[0]) && is_defined(current_sketch.position[1]) {
@@ -118,6 +117,10 @@ pub fn handle_sketch_line_end(cursor: Res<Cursor>, mut current_sketch: ResMut<Cu
     if !is_defined(current_sketch.position[0]) {
         return;
     }
+    // TODO: Implement picking system that checks which entity we're hovering over
+    // If we're hovering over the drawing plane, use cursor position
+    // If we're hovering over a dot, use the dot's position
+    // TODO: Make line mesh non-pickable while it's being drawn
     current_sketch.position[1] = cursor.position;
 }
 
