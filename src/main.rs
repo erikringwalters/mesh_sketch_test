@@ -5,6 +5,7 @@ mod sketch;
 
 use assets::materials::MaterialsPlugin;
 use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
+use bevy::input::common_conditions::input_just_pressed;
 use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy_simple_subsecond_system::*;
 use cursor::CursorPlugin;
@@ -34,9 +35,7 @@ fn main() {
                     DebugPickingMode::Noisy => DebugPickingMode::Disabled,
                 }
             })
-            .distributive_run_if(bevy::input::common_conditions::input_just_pressed(
-                KeyCode::F3,
-            )),
+            .distributive_run_if(input_just_pressed(KeyCode::F3)),
         )
         .run();
 }

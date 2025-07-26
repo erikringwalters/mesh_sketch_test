@@ -56,7 +56,7 @@ pub fn spawn_dot(
     ui_materials: Res<UIMaterials>,
     position: Vec3,
 ) {
-    let dot = commands
+    commands
         .spawn((
             Dot::default(),
             Mesh3d(dot_mesh.0.clone()),
@@ -75,5 +75,16 @@ pub fn spawn_dot(
         ))
         .observe(update_material_on::<Pointer<Released>>(
             ui_materials.hover.clone(),
-        ));
+        ))
+        .observe(move_on_drag);
+}
+
+#[hot]
+pub fn move_on_drag(
+    drag: Trigger<Pointer<Drag>>,
+    cursor: Res<Cursor>,
+    mut transforms: Query<&mut Transform>,
+) {
+    let mut transform = transforms.get_mut(drag.target()).unwrap();
+    transform.translation = cursor.position;
 }
