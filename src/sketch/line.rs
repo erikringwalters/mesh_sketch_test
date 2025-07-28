@@ -44,6 +44,9 @@ impl Plugin for LinePlugin {
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
                     handle_sketch_current_line.run_if(in_state(SketchMode::Line)),
+                    handle_finalize_current_line.run_if(
+                        in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
+                    ),
                     display_lines,
                     //         handle_sketch_line_start.run_if(
                     //             in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
@@ -71,7 +74,7 @@ pub fn handle_spawn_current_line(
     mut ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
     mut current_sketch: ResMut<CurrentSketch>,
-    line_chain: ResMut<LineChain>,
+    mut line_chain: ResMut<LineChain>,
 ) {
     if line_chain.count == 0 {
         let dot = spawn_sketch_dot(
@@ -92,6 +95,47 @@ pub fn handle_spawn_current_line(
 
     let line = spawn_line(&mut commands, &mut current_sketch);
     current_sketch.lines.push(line);
+    line_chain.count += 1;
+}
+
+#[hot]
+pub fn handle_finalize_current_line(
+    mut commands: Commands,
+    mut sketch_dot_mesh: Res<SketchDotMeshHandle>,
+    mut ui_materials: Res<UIMaterials>,
+    cursor: Res<Cursor>,
+    mut current_sketch: ResMut<CurrentSketch>,
+    line_chain: ResMut<LineChain>,
+) {
+    println!("lines: {:?}", current_sketch.lines);
+    println!(
+        "dots: {:?}, dots length: {:?}",
+        current_sketch.dots,
+        current_sketch.dots.len()
+    );
+    println!("line-chain count: {:?}", line_chain.count);
+
+    if current_sketch.dots.len() <= 1 || current_sketch.lines.is_empty() || line_chain.count <= 1 {
+        return;
+    }
+
+    let len = current_sketch.dots.len();
+    let start_dot = current_sketch.dots[len - 1];
+    current_sketch.dots.clear();
+    println!("dot: {:?}", start_dot);
+    current_sketch.dots.push(start_dot);
+    let end_dot = spawn_sketch_dot(
+        &mut commands,
+        &mut sketch_dot_mesh,
+        &mut ui_materials,
+        cursor.position,
+    );
+    current_sketch.dots.push(end_dot);
+    println!("start dot: {:?}, end dot: {:?}\n\n", start_dot, end_dot);
+
+    current_sketch.lines.clear();
+    let line = spawn_line(&mut commands, &mut current_sketch);
+    current_sketch.lines.push(line);
 }
 
 #[hot]
@@ -107,6 +151,15 @@ pub fn handle_sketch_current_line(
         transform.translation = cursor.position;
     }
 }
+
+// pub fn change_dot_mesh(
+// 	mut dots: Query<Mesh>,
+//     mut dot_mesh: Res<DotMeshHandle>,
+//     mut ui_materials: Res<UIMaterials>,
+//     mut current_sketch: ResMut<CurrentSketch>,
+// ) {
+// 	let
+// }
 
 // #[hot]
 // pub fn handle_sketch_dot_start(

@@ -91,6 +91,9 @@ pub fn reset_current_sketch(
     for entity in &current_sketch.lines {
         commands.entity(*entity).despawn();
     }
+    for entity in &current_sketch.dots {
+        commands.entity(*entity).despawn();
+    }
     *current_sketch = CurrentSketch::default();
     line_chain.count = 0
 }
