@@ -24,6 +24,7 @@ pub const DEFAULT_POS: Vec3 = Vec3::splat(f32::MIN);
 #[derive(Resource, Debug, PartialEq)]
 pub struct CurrentSketch {
     pub position: [Vec3; 3],
+    pub dots: Vec<Entity>,
     pub lines: Vec<Entity>,
 }
 
@@ -31,6 +32,7 @@ impl Default for CurrentSketch {
     fn default() -> Self {
         CurrentSketch {
             position: [DEFAULT_POS, DEFAULT_POS, DEFAULT_POS],
+            dots: Vec::new(),
             lines: Vec::new(),
         }
     }

@@ -8,7 +8,7 @@ use crate::{
 };
 
 use super::{
-    size::DOT_RADIUS,
+    size::{DOT_RADIUS, LINE_WIDTH},
     sketch::{SketchMode, update_material_on},
 };
 
@@ -20,6 +20,9 @@ pub struct Dot {
 #[derive(Resource, Debug)]
 pub struct DotMeshHandle(pub Handle<Mesh>);
 
+#[derive(Resource, Debug)]
+pub struct SketchDotMeshHandle(pub Handle<Mesh>);
+
 // #[derive(Resource, Debug)]
 // pub struct Connected
 
@@ -27,15 +30,21 @@ pub struct DotPlugin;
 
 impl Plugin for DotPlugin {
     fn build(&self, app: &mut App) {
-        let mesh_handle = app
+        let dot_mesh_handle = app
             .world_mut()
             .resource_mut::<Assets<Mesh>>()
             .add(Sphere::new(DOT_RADIUS));
-        app.insert_resource(DotMeshHandle(mesh_handle)).add_systems(
-            Update,
-            handle_sketch_dot
-                .run_if(in_state(SketchMode::Dot).and(input_just_pressed(MouseButton::Left))),
-        );
+        let sketch_dot_mesh_handle = app
+            .world_mut()
+            .resource_mut::<Assets<Mesh>>()
+            .add(Sphere::new(LINE_WIDTH));
+        app.insert_resource(DotMeshHandle(dot_mesh_handle))
+            .insert_resource(SketchDotMeshHandle(sketch_dot_mesh_handle))
+            .add_systems(
+                Update,
+                handle_sketch_dot
+                    .run_if(in_state(SketchMode::Dot).and(input_just_pressed(MouseButton::Left))),
+            );
     }
 }
 
@@ -47,6 +56,26 @@ pub fn handle_sketch_dot(
     cursor: Res<Cursor>,
 ) {
     spawn_dot(commands, dot_mesh, ui_materials, cursor.position);
+}
+
+#[hot]
+pub fn spawn_sketch_dot(
+    commands: &mut Commands,
+    sketch_dot_mesh: &mut Res<SketchDotMeshHandle>,
+    ui_materials: &mut Res<UIMaterials>,
+    position: Vec3,
+) -> Entity {
+    commands
+        .spawn((
+            Dot::default(),
+            Mesh3d(sketch_dot_mesh.0.clone()),
+            MeshMaterial3d(ui_materials.line.clone()),
+            Reloadable {
+                level: ReloadLevel::Hard,
+            },
+            Transform::from_translation(position),
+        ))
+        .id()
 }
 
 #[hot]
