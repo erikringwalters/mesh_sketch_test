@@ -13,9 +13,7 @@ use super::{
 };
 
 #[derive(Component, Debug, Default)]
-pub struct Dot {
-    lines: Vec<Entity>,
-}
+pub struct Dot;
 
 #[derive(Resource, Debug)]
 pub struct DotMeshHandle(pub Handle<Mesh>);

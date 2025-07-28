@@ -1,4 +1,7 @@
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use bevy::{
+    ecs::relationship::OrderedRelationshipSourceCollection,
+    input::common_conditions::input_just_pressed, prelude::*,
+};
 use bevy_simple_subsecond_system::*;
 
 use super::{dot::DotPlugin, line::LinePlugin};
@@ -91,6 +94,8 @@ pub fn reset_current_sketch(
     for entity in &current_sketch.lines {
         commands.entity(*entity).despawn();
     }
+
+    current_sketch.dots.pop_front();
     for entity in &current_sketch.dots {
         commands.entity(*entity).despawn();
     }
