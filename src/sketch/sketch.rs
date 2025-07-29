@@ -94,9 +94,12 @@ pub fn reset_current_sketch(
     for entity in &current_sketch.lines {
         commands.entity(*entity).despawn();
     }
-
-    current_sketch.dots.pop_front();
+    println!("line_chain.count: {:?}", line_chain.count);
+    if line_chain.count > 1 {
+        current_sketch.dots.pop_front();
+    }
     for entity in &current_sketch.dots {
+        println!("{:?}", entity);
         commands.entity(*entity).despawn();
     }
     *current_sketch = CurrentSketch::default();

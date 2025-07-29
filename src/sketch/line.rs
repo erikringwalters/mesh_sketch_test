@@ -52,7 +52,7 @@ pub fn start_line_chain(
     mut ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
     mut current_sketch: ResMut<CurrentSketch>,
-    mut line_chain: ResMut<LineChain>,
+    line_chain: ResMut<LineChain>,
 ) {
     if line_chain.count > 0 {
         return;
@@ -76,7 +76,6 @@ pub fn start_line_chain(
 
     let line = spawn_line(&mut commands, &mut current_sketch);
     current_sketch.lines.push(line);
-    line_chain.count += 1;
 }
 
 #[hot]
@@ -88,14 +87,15 @@ pub fn continue_line_chain(
     mut current_sketch: ResMut<CurrentSketch>,
     mut line_chain: ResMut<LineChain>,
 ) {
+    line_chain.count += 1;
     println!(
-        "dots: {:?}\ndots length: {:?}",
+        "current_sketch.dots: {:?}\ncurrent_sketch.dots length: {:?}",
         current_sketch.dots,
         current_sketch.dots.len()
     );
     println!("line-chain count: {:?}", line_chain.count);
 
-    if current_sketch.dots.len() <= 1 || current_sketch.lines.is_empty() || line_chain.count < 1 {
+    if line_chain.count < 2 || current_sketch.dots.len() <= 1 || current_sketch.lines.is_empty() {
         return;
     }
 
@@ -116,7 +116,6 @@ pub fn continue_line_chain(
     current_sketch.lines.clear();
     let line = spawn_line(&mut commands, &mut current_sketch);
     current_sketch.lines.push(line);
-    line_chain.count += 1;
     println!("lines: {:?}", current_sketch.lines);
     println!("");
 }
@@ -152,7 +151,7 @@ fn display_lines(
     dots: Query<&Transform>,
     cursor: Res<Cursor>,
     state: Res<State<SketchMode>>,
-    current_drawing: ResMut<CurrentSketch>,
+    current_sketch: ResMut<CurrentSketch>,
 ) {
     // Display existing lines
     for line in lines.iter() {
@@ -169,7 +168,7 @@ fn display_lines(
         );
     }
     // Display currently drawn line
-    if state.get() == &SketchMode::Line && current_drawing.position[0] != DEFAULT_POS {
-        gizmos.line(current_drawing.position[0], cursor.position, Color::WHITE);
+    if state.get() == &SketchMode::Line && current_sketch.position[0] != DEFAULT_POS {
+        gizmos.line(current_sketch.position[0], cursor.position, Color::WHITE);
     }
 }
