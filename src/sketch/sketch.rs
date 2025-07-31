@@ -82,7 +82,6 @@ pub fn reset_current_sketch(mut commands: Commands, mut current_sketch: ResMut<C
         commands.entity(*entity).despawn();
     }
     for entity in &current_sketch.dots {
-        println!("{:?}", entity);
         commands.entity(*entity).despawn();
     }
     *current_sketch = CurrentSketch::default();

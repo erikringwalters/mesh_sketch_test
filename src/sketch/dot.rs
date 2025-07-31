@@ -49,20 +49,40 @@ impl Plugin for DotPlugin {
             .insert_resource(SketchDotMeshHandle(sketch_dot_mesh_handle))
             .add_systems(
                 Update,
-                handle_sketch_dot
+                spawn_dot
                     .run_if(in_state(SketchMode::Dot).and(input_just_pressed(MouseButton::Left))),
             );
     }
 }
 
 #[hot]
-pub fn handle_sketch_dot(
-    commands: Commands,
+pub fn spawn_dot(
+    mut commands: Commands,
     dot_mesh: Res<DotMeshHandle>,
     ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
 ) {
-    spawn_dot(commands, dot_mesh, ui_materials, cursor.position);
+    commands
+        .spawn((
+            Dot::default(),
+            Mesh3d(dot_mesh.0.clone()),
+            MeshMaterial3d(ui_materials.dot.clone()),
+            Reloadable {
+                level: ReloadLevel::Hard,
+            },
+            Transform::from_translation(cursor.position),
+        ))
+        .observe(update_material_on::<Pointer<Over>>(
+            ui_materials.hover.clone(),
+        ))
+        .observe(update_material_on::<Pointer<Out>>(ui_materials.dot.clone()))
+        .observe(update_material_on::<Pointer<Pressed>>(
+            ui_materials.pressed.clone(),
+        ))
+        .observe(update_material_on::<Pointer<Released>>(
+            ui_materials.hover.clone(),
+        ))
+        .observe(move_on_drag);
 }
 
 #[hot]
@@ -83,36 +103,6 @@ pub fn spawn_sketch_dot(
             Transform::from_translation(position),
         ))
         .id()
-}
-
-#[hot]
-pub fn spawn_dot(
-    mut commands: Commands,
-    dot_mesh: Res<DotMeshHandle>,
-    ui_materials: Res<UIMaterials>,
-    position: Vec3,
-) {
-    commands
-        .spawn((
-            Dot::default(),
-            Mesh3d(dot_mesh.0.clone()),
-            MeshMaterial3d(ui_materials.dot.clone()),
-            Reloadable {
-                level: ReloadLevel::Hard,
-            },
-            Transform::from_translation(position),
-        ))
-        .observe(update_material_on::<Pointer<Over>>(
-            ui_materials.hover.clone(),
-        ))
-        .observe(update_material_on::<Pointer<Out>>(ui_materials.dot.clone()))
-        .observe(update_material_on::<Pointer<Pressed>>(
-            ui_materials.pressed.clone(),
-        ))
-        .observe(update_material_on::<Pointer<Released>>(
-            ui_materials.hover.clone(),
-        ))
-        .observe(move_on_drag);
 }
 
 #[hot]
