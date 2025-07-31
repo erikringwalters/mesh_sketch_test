@@ -12,8 +12,17 @@ use super::{
     sketch::{SketchMode, update_material_on},
 };
 
+#[derive(Debug, Default)]
+enum DotMode {
+    #[default]
+    Temporary,
+    Permanent,
+}
+
 #[derive(Component, Debug, Default)]
-pub struct Dot;
+pub struct Dot {
+    mode: DotMode,
+}
 
 #[derive(Resource, Debug)]
 pub struct DotMeshHandle(pub Handle<Mesh>);

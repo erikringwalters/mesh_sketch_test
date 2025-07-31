@@ -6,7 +6,7 @@ mod sketch;
 use assets::materials::MaterialsPlugin;
 // use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
 // use bevy::input::common_conditions::input_just_pressed;
-use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::{prelude::*, render::camera::ScalingMode, window::PresentMode};
 use bevy_simple_subsecond_system::*;
 use cursor::CursorPlugin;
 use reload::{ReloadPlugin, Reloadable};
@@ -14,10 +14,22 @@ use sketch::sketch::SketchPlugin;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(bevy::log::LogPlugin {
-            filter: "bevy_dev_tools=trace".into(), // Show picking logs trace level and up
-            ..default()
-        }))
+        .add_plugins(
+            DefaultPlugins
+                .set(bevy::log::LogPlugin {
+                    // filter: "bevy_dev_tools=trace".into(), // Show picking logs trace level and up
+                    ..default()
+                })
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Mesh Sketch Test".into(),
+                        present_mode: PresentMode::AutoVsync,
+
+                        ..default()
+                    }),
+                    ..default()
+                }),
+        )
         .add_plugins(MeshPickingPlugin)
         // .add_plugins(DebugPickingPlugin)
         .add_plugins(SimpleSubsecondPlugin::default())
