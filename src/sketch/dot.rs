@@ -106,6 +106,18 @@ pub fn spawn_sketch_dot(
 }
 
 #[hot]
+pub fn finalize_dot(
+    dot_mesh: &Res<DotMeshHandle>,
+    entity: Entity,
+    query: &mut Query<(&mut Dot, &mut Mesh3d)>,
+) {
+    if let Ok((mut dot, mut mesh)) = query.get_mut(entity) {
+        dot.mode = DotMode::Permanent;
+        *mesh = Mesh3d(dot_mesh.0.clone());
+    }
+}
+
+#[hot]
 pub fn move_on_drag(
     drag: Trigger<Pointer<Drag>>,
     cursor: Res<Cursor>,

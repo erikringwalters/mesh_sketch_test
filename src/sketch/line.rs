@@ -6,7 +6,7 @@ use bevy_simple_subsecond_system::*;
 use crate::assets::materials::UIMaterials;
 use crate::cursor::Cursor;
 
-use super::dot::{SketchDotMeshHandle, spawn_sketch_dot};
+use super::dot::{Dot, DotMeshHandle, SketchDotMeshHandle, finalize_dot, spawn_sketch_dot};
 use super::{
     // size::LINE_WIDTH,
     sketch::{CurrentSketch, SketchMode},
@@ -49,9 +49,12 @@ pub fn handle_sketch_line(
     mut sketch_dot_mesh: Res<SketchDotMeshHandle>,
     mut ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
+    dot_mesh: Res<DotMeshHandle>,
     mut current_sketch: ResMut<CurrentSketch>,
+    mut query: Query<(&mut Dot, &mut Mesh3d)>,
 ) {
     let start_dot: Entity;
+
     if current_sketch.dots.is_empty() {
         start_dot = spawn_sketch_dot(
             &mut commands,
@@ -63,8 +66,13 @@ pub fn handle_sketch_line(
     } else {
         let len = current_sketch.dots.len();
         start_dot = current_sketch.dots[len - 1];
+        finalize_dot(&dot_mesh, start_dot, &mut query);
+        if len > 1 {
+            finalize_dot(&dot_mesh, current_sketch.dots[0], &mut query);
+        }
         current_sketch.dots.clear();
     }
+
     let end_dot = spawn_sketch_dot(
         &mut commands,
         &mut sketch_dot_mesh,
