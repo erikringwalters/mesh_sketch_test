@@ -62,7 +62,7 @@ pub fn spawn_dot(
     ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
 ) {
-    commands
+    let dot_entity = commands
         .spawn((
             Dot::default(),
             Mesh3d(dot_mesh.0.clone()),
@@ -72,21 +72,12 @@ pub fn spawn_dot(
             },
             Transform::from_translation(cursor.position),
         ))
-        .observe(update_material_on::<Pointer<Over>>(
-            ui_materials.hover.clone(),
-        ))
-        .observe(update_material_on::<Pointer<Out>>(ui_materials.dot.clone()))
-        .observe(update_material_on::<Pointer<Pressed>>(
-            ui_materials.pressed.clone(),
-        ))
-        .observe(update_material_on::<Pointer<Released>>(
-            ui_materials.hover.clone(),
-        ))
-        .observe(move_on_drag);
+        .id();
+    setup_dot_observes(&mut commands, &ui_materials, dot_entity);
 }
 
 #[hot]
-pub fn spawn_sketch_dot(
+pub fn spawn_current_sketch_dot(
     commands: &mut Commands,
     sketch_dot_mesh: &mut Res<SketchDotMeshHandle>,
     ui_materials: &mut Res<UIMaterials>,
@@ -107,16 +98,39 @@ pub fn spawn_sketch_dot(
 
 #[hot]
 pub fn finalize_dot(
+    commands: &mut Commands,
     dot_mesh: &Res<DotMeshHandle>,
     ui_materials: &Res<UIMaterials>,
-    entity: Entity,
+    dot_entity: Entity,
     query: &mut Query<(&mut Dot, &mut Mesh3d, &mut MeshMaterial3d<StandardMaterial>)>,
 ) {
-    if let Ok((mut dot, mut mesh, mut material)) = query.get_mut(entity) {
+    if let Ok((mut dot, mut mesh, mut material)) = query.get_mut(dot_entity) {
         dot.mode = DotMode::Permanent;
         *mesh = Mesh3d(dot_mesh.0.clone());
         *material = MeshMaterial3d(ui_materials.dot.clone())
     }
+    setup_dot_observes(commands, ui_materials, dot_entity);
+}
+
+#[hot]
+pub fn setup_dot_observes(
+    commands: &mut Commands,
+    ui_materials: &Res<UIMaterials>,
+    dot_entity: Entity,
+) {
+    commands
+        .entity(dot_entity)
+        .observe(update_material_on::<Pointer<Over>>(
+            ui_materials.hover.clone(),
+        ))
+        .observe(update_material_on::<Pointer<Out>>(ui_materials.dot.clone()))
+        .observe(update_material_on::<Pointer<Pressed>>(
+            ui_materials.pressed.clone(),
+        ))
+        .observe(update_material_on::<Pointer<Released>>(
+            ui_materials.hover.clone(),
+        ))
+        .observe(move_on_drag);
 }
 
 #[hot]
