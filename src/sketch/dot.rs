@@ -8,7 +8,7 @@ use crate::{
 };
 
 use super::{
-    size::{DOT_RADIUS, LINE_WIDTH},
+    size::DOT_RADIUS,
     sketch::{SketchMode, update_material_on},
 };
 
@@ -27,9 +27,6 @@ pub struct Dot {
 #[derive(Resource, Debug)]
 pub struct DotMeshHandle(pub Handle<Mesh>);
 
-#[derive(Resource, Debug)]
-pub struct SketchDotMeshHandle(pub Handle<Mesh>);
-
 // #[derive(Resource, Debug)]
 // pub struct Connected
 
@@ -41,12 +38,7 @@ impl Plugin for DotPlugin {
             .world_mut()
             .resource_mut::<Assets<Mesh>>()
             .add(Sphere::new(DOT_RADIUS));
-        let sketch_dot_mesh_handle = app
-            .world_mut()
-            .resource_mut::<Assets<Mesh>>()
-            .add(Sphere::new(LINE_WIDTH));
         app.insert_resource(DotMeshHandle(dot_mesh_handle))
-            .insert_resource(SketchDotMeshHandle(sketch_dot_mesh_handle))
             .add_systems(
                 Update,
                 spawn_dot
@@ -79,14 +71,14 @@ pub fn spawn_dot(
 #[hot]
 pub fn spawn_current_sketch_dot(
     commands: &mut Commands,
-    sketch_dot_mesh: &mut Res<SketchDotMeshHandle>,
+    dot_mesh: &mut Res<DotMeshHandle>,
     ui_materials: &mut Res<UIMaterials>,
     position: Vec3,
 ) -> Entity {
     commands
         .spawn((
             Dot::default(),
-            Mesh3d(sketch_dot_mesh.0.clone()),
+            Mesh3d(dot_mesh.0.clone()),
             MeshMaterial3d(ui_materials.line.clone()),
             Reloadable {
                 level: ReloadLevel::Hard,

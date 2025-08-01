@@ -1,7 +1,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::*;
 
-use super::{dot::DotPlugin, line::LinePlugin};
+use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
 // use super::circle::{CirclePlugin, handle_sketch_circle};
@@ -46,6 +46,7 @@ impl Plugin for SketchPlugin {
             .insert_resource(CurrentSketch::default())
             .add_plugins(DotPlugin)
             .add_plugins(LinePlugin)
+            .add_systems(Startup, sketch_setup)
             .add_systems(
                 Update,
                 (
@@ -55,6 +56,12 @@ impl Plugin for SketchPlugin {
                     .chain(),
             );
     }
+}
+
+#[hot]
+fn sketch_setup(mut gizmo_store: ResMut<GizmoConfigStore>) {
+    let config = gizmo_store.config_mut::<DefaultGizmoConfigGroup>().0;
+    config.line.width = LINE_WIDTH;
 }
 
 #[hot]

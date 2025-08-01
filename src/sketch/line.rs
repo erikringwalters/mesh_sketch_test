@@ -3,10 +3,11 @@ use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::*;
 
+use crate::assets::colors::LINE_COLOR;
 use crate::assets::materials::UIMaterials;
 use crate::cursor::Cursor;
 
-use super::dot::{Dot, DotMeshHandle, SketchDotMeshHandle, finalize_dot, spawn_current_sketch_dot};
+use super::dot::{Dot, DotMeshHandle, finalize_dot, spawn_current_sketch_dot};
 use super::{
     // size::LINE_WIDTH,
     sketch::{CurrentSketch, SketchMode},
@@ -46,8 +47,7 @@ impl Plugin for LinePlugin {
 #[hot]
 pub fn handle_sketch_line(
     mut commands: Commands,
-    dot_mesh: Res<DotMeshHandle>,
-    mut sketch_dot_mesh: Res<SketchDotMeshHandle>,
+    mut dot_mesh: Res<DotMeshHandle>,
     mut ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
     mut current_sketch: ResMut<CurrentSketch>,
@@ -58,7 +58,7 @@ pub fn handle_sketch_line(
     if current_sketch.dots.is_empty() {
         start_dot = spawn_current_sketch_dot(
             &mut commands,
-            &mut sketch_dot_mesh,
+            &mut dot_mesh,
             &mut ui_materials,
             cursor.position,
         );
@@ -88,7 +88,7 @@ pub fn handle_sketch_line(
 
     let end_dot = spawn_current_sketch_dot(
         &mut commands,
-        &mut sketch_dot_mesh,
+        &mut dot_mesh,
         &mut ui_materials,
         cursor.position,
     );
@@ -138,7 +138,7 @@ fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform
         gizmos.line(
             start_position.translation,
             end_position.translation,
-            Color::WHITE,
+            LINE_COLOR,
         );
     }
 }
