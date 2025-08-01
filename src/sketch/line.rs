@@ -46,12 +46,12 @@ impl Plugin for LinePlugin {
 #[hot]
 pub fn handle_sketch_line(
     mut commands: Commands,
+    dot_mesh: Res<DotMeshHandle>,
     mut sketch_dot_mesh: Res<SketchDotMeshHandle>,
     mut ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
-    dot_mesh: Res<DotMeshHandle>,
     mut current_sketch: ResMut<CurrentSketch>,
-    mut query: Query<(&mut Dot, &mut Mesh3d)>,
+    mut query: Query<(&mut Dot, &mut Mesh3d, &mut MeshMaterial3d<StandardMaterial>)>,
 ) {
     let start_dot: Entity;
 
@@ -65,11 +65,12 @@ pub fn handle_sketch_line(
         current_sketch.dots.push(start_dot);
     } else {
         let len = current_sketch.dots.len();
-        start_dot = current_sketch.dots[len - 1];
-        finalize_dot(&dot_mesh, start_dot, &mut query);
         if len > 1 {
-            finalize_dot(&dot_mesh, current_sketch.dots[0], &mut query);
+            finalize_dot(&dot_mesh, &ui_materials, current_sketch.dots[0], &mut query);
         }
+        start_dot = current_sketch.dots[len - 1];
+        finalize_dot(&dot_mesh, &ui_materials, start_dot, &mut query);
+
         current_sketch.dots.clear();
     }
 

@@ -108,12 +108,14 @@ pub fn spawn_sketch_dot(
 #[hot]
 pub fn finalize_dot(
     dot_mesh: &Res<DotMeshHandle>,
+    ui_materials: &Res<UIMaterials>,
     entity: Entity,
-    query: &mut Query<(&mut Dot, &mut Mesh3d)>,
+    query: &mut Query<(&mut Dot, &mut Mesh3d, &mut MeshMaterial3d<StandardMaterial>)>,
 ) {
-    if let Ok((mut dot, mut mesh)) = query.get_mut(entity) {
+    if let Ok((mut dot, mut mesh, mut material)) = query.get_mut(entity) {
         dot.mode = DotMode::Permanent;
         *mesh = Mesh3d(dot_mesh.0.clone());
+        *material = MeshMaterial3d(ui_materials.dot.clone())
     }
 }
 
