@@ -28,7 +28,7 @@ pub struct Current {
     pub lines: Vec<Entity>,
 }
 
-#[derive(Resource, Debug, PartialEq)]
+#[derive(Resource, Debug, Default, PartialEq)]
 pub struct Selected {
     pub dots: Vec<Entity>,
     pub lines: Vec<Entity>,
@@ -50,6 +50,7 @@ impl Plugin for SketchPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<SketchMode>()
             .insert_resource(Current::default())
+            .insert_resource(Selected::default())
             .add_plugins(DotPlugin)
             .add_plugins(LinePlugin)
             .add_systems(Startup, sketch_setup)

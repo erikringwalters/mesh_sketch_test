@@ -34,6 +34,8 @@ impl Plugin for LinePlugin {
         app.add_systems(
             Update,
             (
+                // select_dot
+                //     .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
                 handle_sketch_line
                     .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
                 handle_move_current_line.run_if(in_state(SketchMode::Line)),
@@ -116,3 +118,6 @@ fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform
         );
     }
 }
+
+// #[hot]
+// pub fn select_dot(cursor: Res<Cursor>, mut selected: ResMut<Selected>) {}

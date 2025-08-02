@@ -9,7 +9,7 @@ use crate::{
 
 use super::{
     size::DOT_RADIUS,
-    sketch::{SketchMode, update_material_on},
+    sketch::{Selected, SketchMode, update_material_on},
 };
 
 #[derive(Component, Debug, Default)]
@@ -103,7 +103,8 @@ pub fn setup_dot_observes(
         .observe(update_material_on::<Pointer<Released>>(
             ui_materials.hover.clone(),
         ))
-        .observe(move_on_drag);
+        .observe(move_on_drag)
+        .observe(handle_dot_select);
 }
 
 #[hot]
@@ -118,4 +119,8 @@ pub fn move_on_drag(
     }
     let mut transform = transforms.get_mut(drag.target()).unwrap();
     transform.translation = cursor.position;
+}
+
+pub fn handle_dot_select(_click: Trigger<Pointer<Click>>, mut selected: ResMut<Selected>) {
+    selected.dots.push(_click.target());
 }
