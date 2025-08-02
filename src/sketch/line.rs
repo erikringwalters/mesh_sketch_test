@@ -7,7 +7,7 @@ use crate::assets::colors::LINE_COLOR;
 use crate::assets::materials::UIMaterials;
 use crate::cursor::Cursor;
 
-use super::dot::{Dot, DotMeshHandle, finalize_dot, spawn_current_sketch_dot};
+use super::dot::{Dot, DotMeshHandle, finalize_dot, spawn_temporary_dot};
 use super::{
     // size::LINE_WIDTH,
     sketch::{CurrentSketch, SketchMode},
@@ -47,21 +47,16 @@ impl Plugin for LinePlugin {
 #[hot]
 pub fn handle_sketch_line(
     mut commands: Commands,
-    mut dot_mesh: Res<DotMeshHandle>,
-    mut ui_materials: Res<UIMaterials>,
+    dot_mesh: Res<DotMeshHandle>,
+    ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
     mut current_sketch: ResMut<CurrentSketch>,
-    mut query: Query<(&mut Dot, &mut Mesh3d, &mut MeshMaterial3d<StandardMaterial>)>,
+    mut query: Query<&mut Dot>,
 ) {
     let start_dot: Entity;
 
     if current_sketch.dots.is_empty() {
-        start_dot = spawn_current_sketch_dot(
-            &mut commands,
-            &mut dot_mesh,
-            &mut ui_materials,
-            cursor.position,
-        );
+        start_dot = spawn_temporary_dot(&mut commands, cursor.position);
         current_sketch.dots.push(start_dot);
     } else {
         let len = current_sketch.dots.len();
@@ -86,12 +81,7 @@ pub fn handle_sketch_line(
         current_sketch.dots.clear();
     }
 
-    let end_dot = spawn_current_sketch_dot(
-        &mut commands,
-        &mut dot_mesh,
-        &mut ui_materials,
-        cursor.position,
-    );
+    let end_dot = spawn_temporary_dot(&mut commands, cursor.position);
     current_sketch.dots.push(end_dot);
 
     current_sketch.lines.clear();

@@ -27,9 +27,6 @@ pub struct Dot {
 #[derive(Resource, Debug)]
 pub struct DotMeshHandle(pub Handle<Mesh>);
 
-// #[derive(Resource, Debug)]
-// pub struct Connected
-
 pub struct DotPlugin;
 
 impl Plugin for DotPlugin {
@@ -69,17 +66,10 @@ pub fn spawn_dot(
 }
 
 #[hot]
-pub fn spawn_current_sketch_dot(
-    commands: &mut Commands,
-    dot_mesh: &mut Res<DotMeshHandle>,
-    ui_materials: &mut Res<UIMaterials>,
-    position: Vec3,
-) -> Entity {
+pub fn spawn_temporary_dot(commands: &mut Commands, position: Vec3) -> Entity {
     commands
         .spawn((
             Dot::default(),
-            Mesh3d(dot_mesh.0.clone()),
-            MeshMaterial3d(ui_materials.line.clone()),
             Reloadable {
                 level: ReloadLevel::Hard,
             },
@@ -94,13 +84,16 @@ pub fn finalize_dot(
     dot_mesh: &Res<DotMeshHandle>,
     ui_materials: &Res<UIMaterials>,
     dot_entity: Entity,
-    query: &mut Query<(&mut Dot, &mut Mesh3d, &mut MeshMaterial3d<StandardMaterial>)>,
+    query: &mut Query<&mut Dot>,
 ) {
-    if let Ok((mut dot, mut mesh, mut material)) = query.get_mut(dot_entity) {
+    if let Ok(mut dot) = query.get_mut(dot_entity) {
         dot.mode = DotMode::Permanent;
-        *mesh = Mesh3d(dot_mesh.0.clone());
-        *material = MeshMaterial3d(ui_materials.dot.clone())
     }
+    commands
+        .entity(dot_entity)
+        .insert(Mesh3d(dot_mesh.0.clone()))
+        .insert(MeshMaterial3d(ui_materials.dot.clone()));
+
     setup_dot_observes(commands, ui_materials, dot_entity);
 }
 
