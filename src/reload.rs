@@ -3,7 +3,7 @@ use bevy_simple_subsecond_system::hot;
 
 use crate::{
     setup,
-    sketch::sketch::{self, CurrentSketch},
+    sketch::sketch::{self, Current},
 };
 
 #[derive(Default, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -38,7 +38,7 @@ fn handle_reload(
     input: Res<ButtonInput<KeyCode>>,
     mut commands: Commands,
     query: Query<(Entity, &Reloadable)>,
-    current_sketch: ResMut<CurrentSketch>,
+    current: ResMut<Current>,
 ) {
     if input.pressed(KeyCode::ControlLeft) {
         let reload_level = if input.pressed(KeyCode::ShiftLeft) {
@@ -51,7 +51,7 @@ fn handle_reload(
                 commands.entity(entity).despawn();
             }
         }
-        sketch::reset_current_sketch(commands, current_sketch);
+        sketch::reset_current(commands, current);
         let message = if reload_level == ReloadLevel::Soft {
             "Soft reloaded."
         } else {

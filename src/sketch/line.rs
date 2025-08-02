@@ -7,10 +7,10 @@ use crate::assets::colors::LINE_COLOR;
 use crate::assets::materials::UIMaterials;
 use crate::cursor::Cursor;
 
-use super::dot::{Dot, DotMeshHandle, finalize_dot, spawn_temporary_dot};
+use super::dot::{DotMeshHandle, finalize_dot, spawn_temporary_dot};
 use super::{
     // size::LINE_WIDTH,
-    sketch::{CurrentSketch, SketchMode},
+    sketch::{Current, SketchMode},
 };
 
 #[derive(Component, Debug)]
@@ -36,7 +36,7 @@ impl Plugin for LinePlugin {
             (
                 handle_sketch_line
                     .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
-                handle_sketch_current_line.run_if(in_state(SketchMode::Line)),
+                handle_move_current_line.run_if(in_state(SketchMode::Line)),
                 display_lines,
             )
                 .chain(),
@@ -50,59 +50,43 @@ pub fn handle_sketch_line(
     dot_mesh: Res<DotMeshHandle>,
     ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
-    mut current_sketch: ResMut<CurrentSketch>,
-    mut query: Query<&mut Dot>,
+    mut current: ResMut<Current>,
 ) {
     let start_dot: Entity;
-
-    if current_sketch.dots.is_empty() {
+    if current.dots.is_empty() {
         start_dot = spawn_temporary_dot(&mut commands, cursor.position);
-        current_sketch.dots.push(start_dot);
+        current.dots.push(start_dot);
     } else {
-        let len = current_sketch.dots.len();
-        if len > 1 {
-            finalize_dot(
-                &mut commands,
-                &dot_mesh,
-                &ui_materials,
-                current_sketch.dots[0],
-                &mut query,
-            );
+        for dot in &current.dots {
+            finalize_dot(&mut commands, &dot_mesh, &ui_materials, *dot);
         }
-        start_dot = current_sketch.dots[len - 1];
-        finalize_dot(
-            &mut commands,
-            &dot_mesh,
-            &ui_materials,
-            start_dot,
-            &mut query,
-        );
-
-        current_sketch.dots.clear();
-    }
+        let len = current.dots.len();
+        start_dot = current.dots[len - 1];
+        current.dots.clear();
+    };
 
     let end_dot = spawn_temporary_dot(&mut commands, cursor.position);
-    current_sketch.dots.push(end_dot);
+    current.dots.push(end_dot);
 
-    current_sketch.lines.clear();
+    current.lines.clear();
     let line = spawn_line(&mut commands, start_dot, end_dot);
-    current_sketch.lines.push(line);
+    current.lines.push(line);
 }
 
 #[hot]
-pub fn handle_sketch_current_line(
+pub fn handle_move_current_line(
     cursor: Res<Cursor>,
-    current_sketch: ResMut<CurrentSketch>,
+    current: ResMut<Current>,
     mut dots: Query<&mut Transform>,
 ) {
-    if current_sketch.dots.is_empty() {
+    if current.dots.is_empty() {
         return;
     }
-    let len = current_sketch.dots.len();
-    if let Ok(mut transform) = dots.get_mut(current_sketch.dots[len - 1]) {
+    let len = current.dots.len();
+    if let Ok(mut transform) = dots.get_mut(current.dots[len - 1]) {
         transform.translation = cursor.position;
     } else {
-        println!("Could not find currently sketched dot!");
+        warn!("Could not find currently sketched dot!");
     }
 }
 

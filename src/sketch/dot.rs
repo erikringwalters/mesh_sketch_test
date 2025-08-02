@@ -12,17 +12,8 @@ use super::{
     sketch::{SketchMode, update_material_on},
 };
 
-#[derive(Debug, Default)]
-enum DotMode {
-    #[default]
-    Temporary,
-    Permanent,
-}
-
 #[derive(Component, Debug, Default)]
-pub struct Dot {
-    mode: DotMode,
-}
+pub struct Dot;
 
 #[derive(Resource, Debug)]
 pub struct DotMeshHandle(pub Handle<Mesh>);
@@ -84,17 +75,14 @@ pub fn finalize_dot(
     dot_mesh: &Res<DotMeshHandle>,
     ui_materials: &Res<UIMaterials>,
     dot_entity: Entity,
-    query: &mut Query<&mut Dot>,
-) {
-    if let Ok(mut dot) = query.get_mut(dot_entity) {
-        dot.mode = DotMode::Permanent;
-    }
+) -> Entity {
     commands
         .entity(dot_entity)
         .insert(Mesh3d(dot_mesh.0.clone()))
         .insert(MeshMaterial3d(ui_materials.dot.clone()));
 
     setup_dot_observes(commands, ui_materials, dot_entity);
+    return dot_entity;
 }
 
 #[hot]
@@ -122,8 +110,12 @@ pub fn setup_dot_observes(
 pub fn move_on_drag(
     drag: Trigger<Pointer<Drag>>,
     cursor: Res<Cursor>,
+    state: ResMut<State<SketchMode>>,
     mut transforms: Query<&mut Transform>,
 ) {
+    if state.get().ne(&SketchMode::None) {
+        return;
+    }
     let mut transform = transforms.get_mut(drag.target()).unwrap();
     transform.translation = cursor.position;
 }
