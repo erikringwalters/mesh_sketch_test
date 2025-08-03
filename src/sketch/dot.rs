@@ -8,12 +8,22 @@ use crate::{
 };
 
 use super::{
+    line::{handle_dot_end_hover, handle_dot_hover},
     size::DOT_RADIUS,
-    sketch::{Selected, SketchMode, update_material_on},
+    sketch::{SketchMode, update_material_on},
 };
 
+#[derive(Debug, Default, PartialEq)]
+enum DotMode {
+    #[default]
+    Final,
+    Temporary,
+}
+
 #[derive(Component, Debug, Default)]
-pub struct Dot;
+pub struct Dot {
+    mode: DotMode,
+}
 
 #[derive(Resource, Debug)]
 pub struct DotMeshHandle(pub Handle<Mesh>);
@@ -60,7 +70,9 @@ pub fn spawn_dot(
 pub fn spawn_temporary_dot(commands: &mut Commands, position: Vec3) -> Entity {
     commands
         .spawn((
-            Dot::default(),
+            Dot {
+                mode: DotMode::Temporary,
+            },
             Reloadable {
                 level: ReloadLevel::Hard,
             },
@@ -75,7 +87,15 @@ pub fn finalize_dot(
     dot_mesh: &Res<DotMeshHandle>,
     ui_materials: &Res<UIMaterials>,
     dot_entity: Entity,
+    dots: &mut Query<&mut Dot>,
 ) -> Entity {
+    if let Ok(mut dot) = dots.get_mut(dot_entity) {
+        if dot.mode == DotMode::Final {
+            return dot_entity;
+        } else {
+            dot.mode = DotMode::Final;
+        }
+    };
     commands
         .entity(dot_entity)
         .insert(Mesh3d(dot_mesh.0.clone()))
@@ -104,7 +124,8 @@ pub fn setup_dot_observes(
             ui_materials.hover.clone(),
         ))
         .observe(move_on_drag)
-        .observe(handle_dot_select);
+        .observe(handle_dot_hover)
+        .observe(handle_dot_end_hover);
 }
 
 #[hot]
@@ -119,8 +140,4 @@ pub fn move_on_drag(
     }
     let mut transform = transforms.get_mut(drag.target()).unwrap();
     transform.translation = cursor.position;
-}
-
-pub fn handle_dot_select(_click: Trigger<Pointer<Click>>, mut selected: ResMut<Selected>) {
-    selected.dots.push(_click.target());
 }

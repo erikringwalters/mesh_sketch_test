@@ -7,7 +7,8 @@ use crate::assets::colors::LINE_COLOR;
 use crate::assets::materials::UIMaterials;
 use crate::cursor::Cursor;
 
-use super::dot::{DotMeshHandle, finalize_dot, spawn_temporary_dot};
+use super::dot::{Dot, DotMeshHandle, finalize_dot, spawn_temporary_dot};
+use super::sketch::Selected;
 use super::{
     // size::LINE_WIDTH,
     sketch::{Current, SketchMode},
@@ -34,8 +35,6 @@ impl Plugin for LinePlugin {
         app.add_systems(
             Update,
             (
-                // select_dot
-                //     .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
                 handle_sketch_line
                     .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
                 handle_move_current_line.run_if(in_state(SketchMode::Line)),
@@ -53,19 +52,52 @@ pub fn handle_sketch_line(
     ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
     mut current: ResMut<Current>,
+    selected: Res<Selected>,
+    mut dot_query: Query<&mut Dot>,
+    lines: Query<&mut Line>,
 ) {
     let start_dot: Entity;
-    if current.dots.is_empty() {
+    println!(
+        "current dots: {:?}\nselected dots: {:?}\n",
+        current.dots, selected.dots
+    );
+    let curr_empty = current.dots.is_empty();
+    let slct_empty = selected.dots.is_empty();
+
+    for dot in &current.dots {
+        finalize_dot(
+            &mut commands,
+            &dot_mesh,
+            &ui_materials,
+            *dot,
+            &mut dot_query,
+        );
+    }
+    // New chain starting with new dot
+    if curr_empty && slct_empty {
         start_dot = spawn_temporary_dot(&mut commands, cursor.position);
         current.dots.push(start_dot);
-    } else {
-        for dot in &current.dots {
-            finalize_dot(&mut commands, &dot_mesh, &ui_materials, *dot);
-        }
+    }
+    // Continue chain with new dot
+    else if !curr_empty && slct_empty {
         let len = current.dots.len();
         start_dot = current.dots[len - 1];
         current.dots.clear();
-    };
+    }
+    // New chain starting with existing dot
+    else if curr_empty && !slct_empty {
+        start_dot = selected.dots[0];
+        current.dots.clear();
+    }
+    // Continue chain with existing dot
+    else {
+        println!("final block");
+        swap_line_end(selected.dots[0], &mut current, lines);
+        let temp_dot = current.dots[0];
+        current.dots.clear();
+        commands.entity(temp_dot).despawn();
+        start_dot = selected.dots[0];
+    }
 
     let end_dot = spawn_temporary_dot(&mut commands, cursor.position);
     current.dots.push(end_dot);
@@ -119,5 +151,19 @@ fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform
     }
 }
 
-// #[hot]
-// pub fn select_dot(cursor: Res<Cursor>, mut selected: ResMut<Selected>) {}
+#[hot]
+pub fn handle_dot_hover(hover: Trigger<Pointer<Over>>, mut selected: ResMut<Selected>) {
+    selected.dots.clear();
+    selected.dots.push(hover.target());
+}
+
+pub fn handle_dot_end_hover(_hover: Trigger<Pointer<Out>>, mut selected: ResMut<Selected>) {
+    selected.dots.clear();
+}
+
+#[hot]
+pub fn swap_line_end(next: Entity, current: &mut ResMut<Current>, mut lines: Query<&mut Line>) {
+    if let Ok(mut line) = lines.get_mut(current.lines[0]) {
+        line.end = next;
+    }
+}
