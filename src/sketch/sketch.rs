@@ -34,6 +34,11 @@ pub struct Selected {
     pub lines: Vec<Entity>,
 }
 
+#[derive(Resource, Debug, Default, PartialEq)]
+pub struct Checked {
+    pub lines: Vec<Entity>,
+}
+
 impl Default for Current {
     fn default() -> Self {
         Current {
@@ -51,6 +56,7 @@ impl Plugin for SketchPlugin {
         app.init_state::<SketchMode>()
             .insert_resource(Current::default())
             .insert_resource(Selected::default())
+            .insert_resource(Checked::default())
             .add_plugins(DotPlugin)
             .add_plugins(LinePlugin)
             .add_systems(Startup, sketch_setup)

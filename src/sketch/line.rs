@@ -8,13 +8,13 @@ use crate::assets::materials::UIMaterials;
 use crate::cursor::Cursor;
 
 use super::dot::{Dot, DotMeshHandle, finalize_dot, spawn_temporary_dot};
-use super::sketch::Selected;
+use super::sketch::{Checked, Selected};
 use super::{
     // size::LINE_WIDTH,
     sketch::{Current, SketchMode},
 };
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, PartialEq)]
 pub struct Line {
     pub start: Entity,
     pub end: Entity,
@@ -37,6 +37,8 @@ impl Plugin for LinePlugin {
             (
                 handle_sketch_line
                     .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
+                clear_redundant
+                    .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
                 handle_move_current_line.run_if(in_state(SketchMode::Line)),
                 display_lines,
             )
@@ -53,14 +55,16 @@ pub fn handle_sketch_line(
     cursor: Res<Cursor>,
     mut current: ResMut<Current>,
     selected: Res<Selected>,
+    mut checked: ResMut<Checked>,
     mut dot_query: Query<&mut Dot>,
     lines: Query<&mut Line>,
 ) {
     let start_dot: Entity;
-    println!(
-        "current dots: {:?}\nselected dots: {:?}\n",
-        current.dots, selected.dots
-    );
+
+    if !current.lines.is_empty() {
+        checked.lines.push(current.lines[0]);
+    }
+
     let curr_empty = current.dots.is_empty();
     let slct_empty = selected.dots.is_empty();
 
@@ -73,6 +77,7 @@ pub fn handle_sketch_line(
             &mut dot_query,
         );
     }
+
     // New chain starting with new dot
     if curr_empty && slct_empty {
         start_dot = spawn_temporary_dot(&mut commands, cursor.position);
@@ -80,8 +85,7 @@ pub fn handle_sketch_line(
     }
     // Continue chain with new dot
     else if !curr_empty && slct_empty {
-        let len = current.dots.len();
-        start_dot = current.dots[len - 1];
+        start_dot = *current.dots.last().unwrap();
         current.dots.clear();
     }
     // New chain starting with existing dot
@@ -91,16 +95,15 @@ pub fn handle_sketch_line(
     }
     // Continue chain with existing dot
     else {
-        println!("final block");
-        swap_line_end(selected.dots[0], &mut current, lines);
-        let len = current.dots.len();
-        let temp_dot = current.dots[len - 1];
+        start_dot = selected.dots[0];
+        let temp_dot = swap_line_end(start_dot, &mut current, lines);
         current.dots.clear();
         commands.entity(temp_dot).despawn();
-        start_dot = selected.dots[0];
     }
+    // TODO: Check if line uses 1 dot for start and end
 
     let end_dot = spawn_temporary_dot(&mut commands, cursor.position);
+
     current.dots.push(end_dot);
 
     current.lines.clear();
@@ -117,8 +120,7 @@ pub fn handle_move_current_line(
     if current.dots.is_empty() {
         return;
     }
-    let len = current.dots.len();
-    if let Ok(mut transform) = dots.get_mut(current.dots[len - 1]) {
+    if let Ok(mut transform) = dots.get_mut(*current.dots.last().unwrap()) {
         transform.translation = cursor.position;
     } else {
         warn!("Could not find currently sketched dot!");
@@ -163,8 +165,41 @@ pub fn handle_dot_end_hover(_hover: Trigger<Pointer<Out>>, mut selected: ResMut<
 }
 
 #[hot]
-pub fn swap_line_end(next: Entity, current: &mut ResMut<Current>, mut lines: Query<&mut Line>) {
+pub fn swap_line_end(
+    next: Entity,
+    current: &mut ResMut<Current>,
+    mut lines: Query<&mut Line>,
+) -> Entity {
+    let mut prev = *current.dots.last().unwrap();
     if let Ok(mut line) = lines.get_mut(current.lines[0]) {
+        prev = line.end;
         line.end = next;
     }
+    return prev;
+}
+
+#[hot]
+pub fn clear_redundant(
+    mut commands: Commands,
+    mut checked: ResMut<Checked>,
+    lines: Query<&mut Line>,
+) {
+    if checked.lines.is_empty() {
+        return;
+    }
+    let Ok(compare_to) = lines.get(checked.lines[0]) else {
+        return;
+    };
+    for line in lines.iter() {
+        if compare_to == line {
+            continue;
+        }
+        if (line.start == compare_to.start || line.start == compare_to.end)
+            && (line.end == compare_to.start || line.end == compare_to.end)
+        {
+            println!("Clearing redundant line: {:?}", checked.lines[0]);
+            commands.entity(checked.lines[0]).despawn();
+        }
+    }
+    checked.lines.clear();
 }
