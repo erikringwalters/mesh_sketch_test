@@ -60,22 +60,24 @@ pub fn handle_sketch_line(
     lines: Query<&mut Line>,
 ) {
     let start_dot: Entity;
-
+    let mut prev_line = Entity::PLACEHOLDER;
     if !current.lines.is_empty() {
-        checked.lines.push(current.lines[0]);
+        prev_line = current.lines[0];
     }
 
     let curr_empty = current.dots.is_empty();
     let slct_empty = selected.dots.is_empty();
 
-    for dot in &current.dots {
-        finalize_dot(
-            &mut commands,
-            &dot_mesh,
-            &ui_materials,
-            *dot,
-            &mut dot_query,
-        );
+    if selected.dots.is_empty() {
+        for dot in &current.dots {
+            finalize_dot(
+                &mut commands,
+                &dot_mesh,
+                &ui_materials,
+                *dot,
+                &mut dot_query,
+            );
+        }
     }
 
     // New chain starting with new dot
@@ -95,8 +97,8 @@ pub fn handle_sketch_line(
     }
     // Continue chain with existing dot
     else {
+        let temp_dot = swap_line_end(selected.dots[0], &mut current, lines);
         start_dot = selected.dots[0];
-        let temp_dot = swap_line_end(start_dot, &mut current, lines);
         current.dots.clear();
         commands.entity(temp_dot).despawn();
     }
@@ -109,6 +111,8 @@ pub fn handle_sketch_line(
     current.lines.clear();
     let line = spawn_line(&mut commands, start_dot, end_dot);
     current.lines.push(line);
+    checked.lines.clear();
+    checked.lines.push(prev_line);
 }
 
 #[hot]
@@ -184,22 +188,33 @@ pub fn clear_redundant(
     mut checked: ResMut<Checked>,
     lines: Query<&mut Line>,
 ) {
-    if checked.lines.is_empty() {
+    if checked.lines.is_empty() || checked.lines[0] == Entity::PLACEHOLDER {
         return;
     }
-    let Ok(compare_to) = lines.get(checked.lines[0]) else {
+    let checked_line = checked.lines[0];
+    let Ok(compare_to) = lines.get(checked_line) else {
         return;
     };
     for line in lines.iter() {
+        println!("line: {:?}\n compare_to: {:?}", line, compare_to);
         if compare_to == line {
             continue;
         }
+        if compare_to.start == compare_to.end {
+            warn!("Clearing single-point line: {:?}", checked_line);
+            checked.lines.clear();
+            commands.entity(checked_line).despawn();
+            return;
+        }
+
         if (line.start == compare_to.start || line.start == compare_to.end)
             && (line.end == compare_to.start || line.end == compare_to.end)
         {
-            println!("Clearing redundant line: {:?}", checked.lines[0]);
-            commands.entity(checked.lines[0]).despawn();
+            warn!("Clearing redundant line: {:?}", checked_line);
+            checked.lines.clear();
+            commands.entity(checked_line).despawn();
+            println!("");
+            return;
         }
     }
-    checked.lines.clear();
 }
