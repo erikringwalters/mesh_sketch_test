@@ -91,14 +91,8 @@ pub fn finalize_dot(
 ) -> Entity {
     if let Ok(mut dot) = dots.get_mut(dot_entity) {
         if dot.mode == DotMode::Final {
-            // TODO: This is never triggered
-            println!(
-                "\nFinalizing, but {:?} already finalized, returning\n",
-                dot_entity
-            );
             return dot_entity;
         } else {
-            println!("\nFinalizing {:?}, with {:?}\n", dot_entity, dot);
             dot.mode = DotMode::Final;
         }
     };

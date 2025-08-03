@@ -185,21 +185,20 @@ pub fn swap_line_end(
 pub fn clear_redundant(
     mut commands: Commands,
     mut checked: ResMut<Checked>,
-    lines: Query<&mut Line>,
+    lines: Query<(Entity, &mut Line)>,
 ) {
     if checked.lines.is_empty() || checked.lines[0] == Entity::PLACEHOLDER {
         return;
     }
     let checked_line = checked.lines[0];
-    let Ok(compare_to) = lines.get(checked_line) else {
+    let Ok((compare_to_entity, compare_to)) = lines.get(checked_line) else {
         return;
     };
-    for line in lines.iter() {
-        if compare_to == line {
-            // TODO: compare entities rather than "lines" (starts and ends)
+    for (line_entity, line) in lines.iter() {
+        if compare_to_entity == line_entity {
             continue;
         }
-        println!("line: {:?}\ncompare: {:?}", line, compare_to);
+        // println!("line: {:?}\ncompare: {:?}", line, compare_to);
         if compare_to.start == compare_to.end {
             warn!("Clearing single-point line: {:?}", checked_line);
             checked.lines.clear();
@@ -209,14 +208,11 @@ pub fn clear_redundant(
 
         let same_line = line.start == compare_to.start && line.end == compare_to.end;
         let same_line_reversed = line.start == compare_to.end && line.end == compare_to.start;
-        println!(
-            "same_line: {:?}\nsame_line_reversed: {:?}",
-            same_line, same_line_reversed
-        );
-        if same_line || same_line_reversed
-        // (line.start == compare_to.start || line.start == compare_to.end)
-        //     && (line.end == compare_to.start || line.end == compare_to.end)
-        {
+        // println!(
+        //     "same_line: {:?}\nsame_line_reversed: {:?}",
+        //     same_line, same_line_reversed
+        // );
+        if same_line || same_line_reversed {
             warn!("Clearing redundant line: {:?}", checked_line);
             checked.lines.clear();
             commands.entity(checked_line).despawn();
