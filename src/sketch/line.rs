@@ -93,7 +93,8 @@ pub fn handle_sketch_line(
     else {
         println!("final block");
         swap_line_end(selected.dots[0], &mut current, lines);
-        let temp_dot = current.dots[0];
+        let len = current.dots.len();
+        let temp_dot = current.dots[len - 1];
         current.dots.clear();
         commands.entity(temp_dot).despawn();
         start_dot = selected.dots[0];
