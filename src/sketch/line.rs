@@ -102,7 +102,6 @@ pub fn handle_sketch_line(
         current.dots.clear();
         commands.entity(temp_dot).despawn();
     }
-    // TODO: Check if line uses 1 dot for start and end
 
     let end_dot = spawn_temporary_dot(&mut commands, cursor.position);
 
@@ -196,10 +195,11 @@ pub fn clear_redundant(
         return;
     };
     for line in lines.iter() {
-        println!("line: {:?}\n compare_to: {:?}", line, compare_to);
         if compare_to == line {
+            // TODO: compare entities rather than "lines" (starts and ends)
             continue;
         }
+        println!("line: {:?}\ncompare: {:?}", line, compare_to);
         if compare_to.start == compare_to.end {
             warn!("Clearing single-point line: {:?}", checked_line);
             checked.lines.clear();
@@ -207,8 +207,15 @@ pub fn clear_redundant(
             return;
         }
 
-        if (line.start == compare_to.start || line.start == compare_to.end)
-            && (line.end == compare_to.start || line.end == compare_to.end)
+        let same_line = line.start == compare_to.start && line.end == compare_to.end;
+        let same_line_reversed = line.start == compare_to.end && line.end == compare_to.start;
+        println!(
+            "same_line: {:?}\nsame_line_reversed: {:?}",
+            same_line, same_line_reversed
+        );
+        if same_line || same_line_reversed
+        // (line.start == compare_to.start || line.start == compare_to.end)
+        //     && (line.end == compare_to.start || line.end == compare_to.end)
         {
             warn!("Clearing redundant line: {:?}", checked_line);
             checked.lines.clear();
