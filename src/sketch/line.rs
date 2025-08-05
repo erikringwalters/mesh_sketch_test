@@ -56,7 +56,7 @@ pub fn handle_sketch_line(
     mut current: ResMut<Current>,
     selected: Res<Selected>,
     mut checked: ResMut<Checked>,
-    mut dot_query: Query<&mut Dot>,
+    mut dots: Query<&mut Dot>,
     lines: Query<&mut Line>,
 ) {
     let start_dot: Entity;
@@ -68,16 +68,8 @@ pub fn handle_sketch_line(
     let curr_empty = current.dots.is_empty();
     let slct_empty = selected.dots.is_empty();
 
-    if selected.dots.is_empty() {
-        for dot in &current.dots {
-            finalize_dot(
-                &mut commands,
-                &dot_mesh,
-                &ui_materials,
-                *dot,
-                &mut dot_query,
-            );
-        }
+    for dot in &current.dots {
+        finalize_dot(&mut commands, &dot_mesh, &ui_materials, *dot, &mut dots);
     }
 
     // New chain starting with new dot
@@ -200,7 +192,7 @@ pub fn clear_redundant(
         }
         // println!("line: {:?}\ncompare: {:?}", line, compare_to);
         if compare_to.start == compare_to.end {
-            warn!("Clearing single-point line: {:?}", checked_line);
+            warn!("Clearing single-dot line: {:?}", checked_line);
             checked.lines.clear();
             commands.entity(checked_line).despawn();
             return;
