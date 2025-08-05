@@ -10,7 +10,7 @@ use crate::{
 use super::{
     line::{handle_dot_end_hover, handle_dot_hover},
     size::DOT_RADIUS,
-    sketch::{SketchMode, update_material_on},
+    sketch::{Current, SketchMode, update_material_on},
 };
 
 #[derive(Debug, Default, PartialEq)]
@@ -103,6 +103,18 @@ pub fn finalize_dot(
 
     setup_dot_observes(commands, ui_materials, dot_entity);
     return dot_entity;
+}
+
+pub fn finalize_dots(
+    mut commands: Commands,
+    current: ResMut<Current>,
+    dot_mesh: Res<DotMeshHandle>,
+    ui_materials: Res<UIMaterials>,
+    mut dots: Query<&mut Dot>,
+) {
+    for dot in &current.dots {
+        finalize_dot(&mut commands, &dot_mesh, &ui_materials, *dot, &mut dots);
+    }
 }
 
 #[hot]

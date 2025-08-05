@@ -1,18 +1,20 @@
+use std::f32::consts::PI;
+
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::input::common_conditions::input_just_pressed;
+use bevy::math::ops::atan;
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::*;
 
 use crate::assets::colors::LINE_COLOR;
 use crate::assets::materials::UIMaterials;
 use crate::cursor::Cursor;
+use crate::reload::Reloadable;
 
-use super::dot::{Dot, DotMeshHandle, finalize_dot, spawn_temporary_dot};
+use super::dot::{finalize_dots, spawn_temporary_dot};
+use super::size::LINE_MESH_WIDTH;
 use super::sketch::{Checked, Selected};
-use super::{
-    // size::LINE_WIDTH,
-    sketch::{Current, SketchMode},
-};
+use super::sketch::{Current, SketchMode};
 
 #[derive(Component, Debug, PartialEq)]
 pub struct Line {
@@ -20,21 +22,25 @@ pub struct Line {
     pub end: Entity,
 }
 
-// #[derive(Resource, Debug)]
-// pub struct LineMeshHandle(pub Handle<Mesh>);
+#[derive(Resource, Debug)]
+pub struct LineMeshHandle(pub Handle<Mesh>);
 
 pub struct LinePlugin;
 
 impl Plugin for LinePlugin {
     fn build(&self, app: &mut App) {
-        // let mesh_handle = app
-        //     .world_mut()
-        //     .resource_mut::<Assets<Mesh>>()
-        //     .add(Cylinder::new(LINE_WIDTH, 1.));
-        // app.insert_resource(LineMeshHandle(mesh_handle))
+        let mesh_handle = app
+            .world_mut()
+            .resource_mut::<Assets<Mesh>>()
+            .add(Cylinder::new(LINE_MESH_WIDTH, 1.));
+        app.insert_resource(LineMeshHandle(mesh_handle));
         app.add_systems(
             Update,
             (
+                finalize_dots
+                    .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
+                finalize_lines
+                    .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
                 handle_sketch_line
                     .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
                 clear_redundant
@@ -50,13 +56,10 @@ impl Plugin for LinePlugin {
 #[hot]
 pub fn handle_sketch_line(
     mut commands: Commands,
-    dot_mesh: Res<DotMeshHandle>,
-    ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
     mut current: ResMut<Current>,
     selected: Res<Selected>,
     mut checked: ResMut<Checked>,
-    mut dots: Query<&mut Dot>,
     lines: Query<&mut Line>,
 ) {
     let start_dot: Entity;
@@ -67,10 +70,6 @@ pub fn handle_sketch_line(
 
     let curr_empty = current.dots.is_empty();
     let slct_empty = selected.dots.is_empty();
-
-    for dot in &current.dots {
-        finalize_dot(&mut commands, &dot_mesh, &ui_materials, *dot, &mut dots);
-    }
 
     // New chain starting with new dot
     if curr_empty && slct_empty {
@@ -155,6 +154,7 @@ pub fn handle_dot_hover(hover: Trigger<Pointer<Over>>, mut selected: ResMut<Sele
     selected.dots.push(hover.target());
 }
 
+#[hot]
 pub fn handle_dot_end_hover(_hover: Trigger<Pointer<Out>>, mut selected: ResMut<Selected>) {
     selected.dots.clear();
 }
@@ -174,6 +174,94 @@ pub fn swap_line_end(
 }
 
 #[hot]
+pub fn finalize_line(
+    commands: &mut Commands,
+    line_mesh: &Res<LineMeshHandle>,
+    ui_materials: &Res<UIMaterials>,
+    line_entity: Entity,
+    lines: &mut Query<&mut Line>,
+    dots: &mut Query<&Transform>,
+) {
+    let (start_pos, end_pos) = get_line_ending_positions(line_entity, lines, dots);
+    let transform = get_line_mesh_transform(start_pos, end_pos);
+
+    // TODO: Fix rotation
+    let mesh = commands
+        .spawn((
+            Mesh3d(line_mesh.0.clone()),
+            MeshMaterial3d(ui_materials.line.clone()),
+            Visibility::Visible,
+            Transform::from(transform),
+            Reloadable::default(),
+        ))
+        .id();
+    commands.entity(line_entity).add_child(mesh);
+}
+
+pub fn get_line_ending_positions(
+    line_entity: Entity,
+    lines: &mut Query<&mut Line>,
+    dots: &mut Query<&Transform>,
+) -> (Transform, Transform) {
+    let mut transforms = (Transform::default(), Transform::default());
+    let Ok(line) = lines.get(line_entity) else {
+        return transforms;
+    };
+    let Ok(start) = dots.get(line.start) else {
+        return transforms;
+    };
+    let Ok(end) = dots.get(line.end) else {
+        return transforms;
+    };
+    transforms = (*start, *end);
+    return transforms;
+}
+
+pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
+    println!("start: {:?}\n, end: {:?}", start, end);
+    let a = start.translation;
+    let b = end.translation;
+    let center = (a + b) * 0.5;
+    let dir = b - a;
+    let n = b.y - a.y;
+    let d = b.x - a.x;
+    let angle = if d != 0. { atan(n / d) } else { 0. };
+    let rot = Vec3::Z * angle + vec3(0., 0., PI / 2.);
+    let quat = Quat::from_euler(EulerRot::YXZ, rot.x, rot.y, rot.z);
+    // let quat = Quat::from_rotation_arc(Vec3::Z, dir.normalize_or_zero());
+    println!("quat: {:?}\n", quat);
+
+    let scale = Vec3::new(LINE_MESH_WIDTH, dir.length(), LINE_MESH_WIDTH);
+
+    return Transform {
+        translation: center,
+        rotation: quat,
+        scale: scale,
+    };
+}
+
+#[hot]
+pub fn finalize_lines(
+    mut commands: Commands,
+    current: ResMut<Current>,
+    line_mesh: Res<LineMeshHandle>,
+    ui_materials: Res<UIMaterials>,
+    mut lines: Query<&mut Line>,
+    mut dots: Query<&Transform>,
+) {
+    for line in &current.lines {
+        finalize_line(
+            &mut commands,
+            &line_mesh,
+            &ui_materials,
+            *line,
+            &mut lines,
+            &mut dots,
+        );
+    }
+}
+
+#[hot]
 pub fn clear_redundant(
     mut commands: Commands,
     mut checked: ResMut<Checked>,
@@ -190,7 +278,6 @@ pub fn clear_redundant(
         if compare_to_entity == line_entity {
             continue;
         }
-        // println!("line: {:?}\ncompare: {:?}", line, compare_to);
         if compare_to.start == compare_to.end {
             warn!("Clearing single-dot line: {:?}", checked_line);
             checked.lines.clear();
@@ -200,10 +287,6 @@ pub fn clear_redundant(
 
         let same_line = line.start == compare_to.start && line.end == compare_to.end;
         let same_line_reversed = line.start == compare_to.end && line.end == compare_to.start;
-        // println!(
-        //     "same_line: {:?}\nsame_line_reversed: {:?}",
-        //     same_line, same_line_reversed
-        // );
         if same_line || same_line_reversed {
             warn!("Clearing redundant line: {:?}", checked_line);
             checked.lines.clear();

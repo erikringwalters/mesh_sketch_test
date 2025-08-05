@@ -18,6 +18,18 @@ pub enum SketchMode {
     Arc,
 }
 
+// #[derive(Debug)]
+// pub enum Angle {
+//     Custom,
+//     Horizontal,
+//     Vertical,
+// }
+
+// #[derive(Component, Debug)]
+// pub struct Constraint {
+//     angle: Angle,
+// }
+
 // pub const DEFAULT_RESOLUTION: u32 = 64;
 pub const DEFAULT_POS: Vec3 = Vec3::splat(f32::MIN);
 
