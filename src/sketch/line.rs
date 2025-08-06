@@ -1,8 +1,5 @@
-use std::f32::consts::PI;
-
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::input::common_conditions::input_just_pressed;
-use bevy::math::ops::atan;
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::*;
 
@@ -184,14 +181,15 @@ pub fn finalize_line(
     let (start_pos, end_pos) = get_line_ending_positions(line_entity, lines, dots);
     let transform = get_line_mesh_transform(start_pos, end_pos);
 
-    commands.spawn((
+    commands.entity(line_entity).insert((
         Mesh3d(line_mesh.0.clone()),
         MeshMaterial3d(ui_materials.line.clone()),
-        // Visibility::Visible,
+        Visibility::Visible,
         Transform::from(transform),
     ));
 }
 
+#[hot]
 pub fn get_line_ending_positions(
     line_entity: Entity,
     lines: &mut Query<&mut Line>,
@@ -211,17 +209,13 @@ pub fn get_line_ending_positions(
     return transforms;
 }
 
+#[hot]
 pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
     println!("start: {:?}\n, end: {:?}", start, end);
     let a = start.translation;
     let b = end.translation;
     let center = (a + b) / 2.;
     let dir = b - a;
-    // let n = b.y - a.y;
-    // let d = b.x - a.x;
-    // let angle = if d != 0. { atan(n / d) } else { 0. };
-    // let rot = Vec3::Z * angle + vec3(0., 0., PI / 2.);
-    // let quat = Quat::from_euler(EulerRot::YXZ, rot.x, rot.y, rot.z);
     let quat = Quat::from_rotation_arc(Vec3::Y, dir.normalize_or_zero());
     println!("quat: {:?}\n", quat);
 
@@ -231,6 +225,24 @@ pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
         translation: center,
         rotation: quat,
         scale: scale,
+    }
+}
+
+#[hot]
+pub fn update_line_transforms(
+    mut lines: Query<(&Line, &mut Transform)>,
+    dots: Query<&Transform, Without<Line>>,
+) {
+    for (line, mut transform) in lines.iter_mut() {
+        let Ok(start) = dots.get(line.start) else {
+            continue;
+        };
+        let Ok(end) = dots.get(line.end) else {
+            continue;
+        };
+
+        let mesh_transform = get_line_mesh_transform(*start, *end);
+        *transform = mesh_transform;
     }
 }
 
