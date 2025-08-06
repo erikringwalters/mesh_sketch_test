@@ -9,7 +9,6 @@ use bevy_simple_subsecond_system::*;
 use crate::assets::colors::LINE_COLOR;
 use crate::assets::materials::UIMaterials;
 use crate::cursor::Cursor;
-use crate::reload::Reloadable;
 
 use super::dot::{finalize_dots, spawn_temporary_dot};
 use super::size::LINE_MESH_WIDTH;
@@ -185,17 +184,12 @@ pub fn finalize_line(
     let (start_pos, end_pos) = get_line_ending_positions(line_entity, lines, dots);
     let transform = get_line_mesh_transform(start_pos, end_pos);
 
-    // TODO: Fix rotation
-    let mesh = commands
-        .spawn((
-            Mesh3d(line_mesh.0.clone()),
-            MeshMaterial3d(ui_materials.line.clone()),
-            Visibility::Visible,
-            Transform::from(transform),
-            Reloadable::default(),
-        ))
-        .id();
-    commands.entity(line_entity).add_child(mesh);
+    commands.spawn((
+        Mesh3d(line_mesh.0.clone()),
+        MeshMaterial3d(ui_materials.line.clone()),
+        // Visibility::Visible,
+        Transform::from(transform),
+    ));
 }
 
 pub fn get_line_ending_positions(
@@ -221,23 +215,23 @@ pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
     println!("start: {:?}\n, end: {:?}", start, end);
     let a = start.translation;
     let b = end.translation;
-    let center = (a + b) * 0.5;
+    let center = (a + b) / 2.;
     let dir = b - a;
-    let n = b.y - a.y;
-    let d = b.x - a.x;
-    let angle = if d != 0. { atan(n / d) } else { 0. };
-    let rot = Vec3::Z * angle + vec3(0., 0., PI / 2.);
-    let quat = Quat::from_euler(EulerRot::YXZ, rot.x, rot.y, rot.z);
-    // let quat = Quat::from_rotation_arc(Vec3::Z, dir.normalize_or_zero());
+    // let n = b.y - a.y;
+    // let d = b.x - a.x;
+    // let angle = if d != 0. { atan(n / d) } else { 0. };
+    // let rot = Vec3::Z * angle + vec3(0., 0., PI / 2.);
+    // let quat = Quat::from_euler(EulerRot::YXZ, rot.x, rot.y, rot.z);
+    let quat = Quat::from_rotation_arc(Vec3::Y, dir.normalize_or_zero());
     println!("quat: {:?}\n", quat);
 
     let scale = Vec3::new(LINE_MESH_WIDTH, dir.length(), LINE_MESH_WIDTH);
 
-    return Transform {
+    Transform {
         translation: center,
         rotation: quat,
         scale: scale,
-    };
+    }
 }
 
 #[hot]
