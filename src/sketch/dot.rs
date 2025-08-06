@@ -23,6 +23,7 @@ enum DotMode {
 #[derive(Component, Debug, Default)]
 pub struct Dot {
     mode: DotMode,
+    pub prev_transform: Transform,
 }
 
 #[derive(Resource, Debug)]
@@ -41,7 +42,8 @@ impl Plugin for DotPlugin {
                 Update,
                 spawn_dot
                     .run_if(in_state(SketchMode::Dot).and(input_just_pressed(MouseButton::Left))),
-            );
+            )
+            .add_systems(PostUpdate, record_previous_transform);
     }
 }
 
@@ -72,6 +74,7 @@ pub fn spawn_temporary_dot(commands: &mut Commands, position: Vec3) -> Entity {
         .spawn((
             Dot {
                 mode: DotMode::Temporary,
+                prev_transform: Transform::default(),
             },
             Reloadable {
                 level: ReloadLevel::Hard,
@@ -141,12 +144,20 @@ pub fn setup_dot_observes(
 }
 
 #[hot]
+pub fn record_previous_transform(mut dots: Query<(&mut Dot, &Transform)>) {
+    for (mut dot, transform) in dots.iter_mut() {
+        dot.prev_transform = *transform;
+    }
+}
+
+#[hot]
 pub fn move_on_drag(
     drag: Trigger<Pointer<Drag>>,
     cursor: Res<Cursor>,
     state: ResMut<State<SketchMode>>,
     mut transforms: Query<&mut Transform>,
 ) {
+    // TODO: Consider a more reliably scheduled way to move dots
     if state.get().ne(&SketchMode::None) {
         return;
     }

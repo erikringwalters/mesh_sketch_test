@@ -1,11 +1,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::*;
 
-use super::{
-    dot::DotPlugin,
-    line::{LinePlugin, update_line_transforms},
-    size::LINE_WIDTH,
-};
+use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
 // use super::circle::{CirclePlugin, handle_sketch_circle};
@@ -80,7 +76,6 @@ impl Plugin for SketchPlugin {
                 Update,
                 (
                     change_sketch_mode,
-                    update_line_transforms,
                     reset_current.run_if(input_just_pressed(MouseButton::Right)),
                 )
                     .chain(),

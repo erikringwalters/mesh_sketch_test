@@ -7,7 +7,7 @@ use crate::assets::colors::LINE_COLOR;
 use crate::assets::materials::UIMaterials;
 use crate::cursor::Cursor;
 
-use super::dot::{finalize_dots, spawn_temporary_dot};
+use super::dot::{Dot, finalize_dots, spawn_temporary_dot};
 use super::size::LINE_MESH_WIDTH;
 use super::sketch::{Checked, Selected};
 use super::sketch::{Current, SketchMode};
@@ -29,23 +29,28 @@ impl Plugin for LinePlugin {
             .world_mut()
             .resource_mut::<Assets<Mesh>>()
             .add(Cylinder::new(LINE_MESH_WIDTH, 1.));
-        app.insert_resource(LineMeshHandle(mesh_handle));
-        app.add_systems(
-            Update,
-            (
-                finalize_dots
-                    .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
-                finalize_lines
-                    .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
-                handle_sketch_line
-                    .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
-                clear_redundant
-                    .run_if(in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left))),
-                handle_move_current_line.run_if(in_state(SketchMode::Line)),
-                display_lines,
-            )
-                .chain(),
-        );
+        app.insert_resource(LineMeshHandle(mesh_handle))
+            .add_systems(
+                Update,
+                (
+                    finalize_dots.run_if(
+                        in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
+                    ),
+                    finalize_lines.run_if(
+                        in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
+                    ),
+                    handle_sketch_line.run_if(
+                        in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
+                    ),
+                    clear_redundant.run_if(
+                        in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
+                    ),
+                    handle_move_current_line.run_if(in_state(SketchMode::Line)),
+                    update_line_transforms,
+                    display_lines,
+                )
+                    .chain(),
+            );
     }
 }
 
@@ -211,13 +216,11 @@ pub fn get_line_ending_positions(
 
 #[hot]
 pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
-    println!("start: {:?}\n, end: {:?}", start, end);
     let a = start.translation;
     let b = end.translation;
     let center = (a + b) / 2.;
     let dir = b - a;
     let quat = Quat::from_rotation_arc(Vec3::Y, dir.normalize_or_zero());
-    println!("quat: {:?}\n", quat);
 
     let scale = Vec3::new(LINE_MESH_WIDTH, dir.length(), LINE_MESH_WIDTH);
 
@@ -231,7 +234,7 @@ pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
 #[hot]
 pub fn update_line_transforms(
     mut lines: Query<(&Line, &mut Transform)>,
-    dots: Query<&Transform, Without<Line>>,
+    dots: Query<(&Dot, &Transform), Without<Line>>,
 ) {
     for (line, mut transform) in lines.iter_mut() {
         let Ok(start) = dots.get(line.start) else {
@@ -240,8 +243,15 @@ pub fn update_line_transforms(
         let Ok(end) = dots.get(line.end) else {
             continue;
         };
+        let prev_start = start.0.prev_transform;
+        let prev_end = end.0.prev_transform;
 
-        let mesh_transform = get_line_mesh_transform(*start, *end);
+        // Return if no change in dot transforms
+        if &prev_start == start.1 && &prev_end == end.1 {
+            return;
+        }
+
+        let mesh_transform = get_line_mesh_transform(*start.1, *end.1);
         *transform = mesh_transform;
     }
 }
