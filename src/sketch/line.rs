@@ -243,13 +243,13 @@ pub fn update_line_transforms(
         let Ok(end) = dots.get(line.end) else {
             continue;
         };
-        let prev_start = start.0.prev_transform;
-        let prev_end = end.0.prev_transform;
+        // let prev_start = start.0.prev_transform;
+        // let prev_end = end.0.prev_transform;
 
-        // Return if no change in dot transforms
-        if &prev_start == start.1 && &prev_end == end.1 {
-            return;
-        }
+        // // Return if no change in dot transforms
+        // if &prev_start == start.1 && &prev_end == end.1 {
+        //     return;
+        // }
 
         let mesh_transform = get_line_mesh_transform(*start.1, *end.1);
         *transform = mesh_transform;
