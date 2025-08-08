@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::colors::{DOT_COLOR, HOVER_COLOR, LINE_COLOR, PRESSED_COLOR};
+use super::colors::*;
 
 #[derive(Resource, Default)]
 pub struct UIMaterials {
@@ -20,10 +20,10 @@ impl Plugin for MaterialsPlugin {
 
 pub fn setup_ui_materials(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>) {
     commands.insert_resource(UIMaterials {
-        dot: materials.add(ui_material(DOT_COLOR)),
-        line: materials.add(ui_material(LINE_COLOR)),
-        hover: materials.add(ui_material(HOVER_COLOR)),
-        pressed: materials.add(ui_material(PRESSED_COLOR)),
+        dot: materials.add(ui_material(SUNRISE_ORANGE)),
+        line: materials.add(ui_material(LINE)),
+        hover: materials.add(ui_material(HOVER)),
+        pressed: materials.add(ui_material(PRESSED)),
     });
 }
 

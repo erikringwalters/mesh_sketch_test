@@ -83,5 +83,5 @@ pub fn pick_mesh(mut ray_cast: MeshRayCast, camera_ray: Res<CameraRay>) {
         return;
     };
 
-    println!("entity: {:?}, hit: {:?}", entity, hit);
+    println!("entity: {:?}\nhit pos: {:?}", entity, hit.point);
 }

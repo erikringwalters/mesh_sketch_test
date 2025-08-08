@@ -3,7 +3,7 @@ use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::*;
 
-use crate::assets::colors::LINE_COLOR;
+use crate::assets::colors::LINE;
 use crate::assets::materials::UIMaterials;
 use crate::assets::visibility::MESH_VISIBILITY;
 use crate::cursor::Cursor;
@@ -143,11 +143,7 @@ fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform
         let Ok(end_position) = dots.get(line.end) else {
             continue;
         };
-        gizmos.line(
-            start_position.translation,
-            end_position.translation,
-            LINE_COLOR,
-        );
+        gizmos.line(start_position.translation, end_position.translation, LINE);
     }
 }
 

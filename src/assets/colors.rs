@@ -1,6 +1,9 @@
 use bevy::color::Color;
 
-pub const DOT_COLOR: Color = Color::srgb(1., 0.4, 0.);
-pub const LINE_COLOR: Color = Color::srgb(1., 1., 1.);
-pub const HOVER_COLOR: Color = Color::srgb(0., 0.8, 0.8);
-pub const PRESSED_COLOR: Color = Color::srgb(0.8, 0.8, 0.);
+pub const MAX_RGB: f32 = 255.;
+
+pub const LINE: Color = Color::srgb(1., 1., 1.);
+pub const HOVER: Color = Color::srgb(0., 0.8, 0.8);
+pub const PRESSED: Color = Color::srgb(0.8, 0.8, 0.);
+// pub const SQUOOSH_ORANGE: Color = Color::srgb(1., 0.4, 0.);
+pub const SUNRISE_ORANGE: Color = Color::srgb(247. / MAX_RGB, 139. / MAX_RGB, 23. / MAX_RGB);

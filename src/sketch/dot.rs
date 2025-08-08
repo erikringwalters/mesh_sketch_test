@@ -176,7 +176,7 @@ pub fn move_on_drag(
 //                 Quat::from_rotation_arc(Vec3::Z, Dir3::Z.as_vec3()),
 //             ),
 //             DOT_RADIUS,
-//             DOT_COLOR,
+//             DOT,
 //         );
 //     }
 // }
