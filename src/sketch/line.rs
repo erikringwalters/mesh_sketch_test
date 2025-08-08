@@ -5,6 +5,7 @@ use bevy_simple_subsecond_system::*;
 
 use crate::assets::colors::LINE_COLOR;
 use crate::assets::materials::UIMaterials;
+use crate::assets::visibility::MESH_VISIBILITY;
 use crate::cursor::Cursor;
 
 use super::dot::{Dot, finalize_dots, spawn_temporary_dot};
@@ -189,7 +190,7 @@ pub fn finalize_line(
     commands.entity(line_entity).insert((
         Mesh3d(line_mesh.0.clone()),
         MeshMaterial3d(ui_materials.line.clone()),
-        Visibility::Visible,
+        MESH_VISIBILITY,
         Transform::from(transform),
     ));
 }

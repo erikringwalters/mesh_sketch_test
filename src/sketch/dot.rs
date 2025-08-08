@@ -2,14 +2,14 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::*;
 
 use crate::{
-    assets::materials::UIMaterials,
+    assets::{colors::DOT_COLOR, materials::UIMaterials, visibility::MESH_VISIBILITY},
     cursor::Cursor,
     reload::{ReloadLevel, Reloadable},
 };
 
 use super::{
     line::{handle_dot_end_hover, handle_dot_hover},
-    size::DOT_RADIUS,
+    size::{DOT_MESH_RADIUS, DOT_RADIUS},
     sketch::{Current, SketchMode, update_material_on},
 };
 
@@ -36,12 +36,17 @@ impl Plugin for DotPlugin {
         let dot_mesh_handle = app
             .world_mut()
             .resource_mut::<Assets<Mesh>>()
-            .add(Sphere::new(DOT_RADIUS));
+            .add(Sphere::new(DOT_MESH_RADIUS));
         app.insert_resource(DotMeshHandle(dot_mesh_handle))
             .add_systems(
                 Update,
-                spawn_dot
-                    .run_if(in_state(SketchMode::Dot).and(input_just_pressed(MouseButton::Left))),
+                (
+                    spawn_dot.run_if(
+                        in_state(SketchMode::Dot).and(input_just_pressed(MouseButton::Left)),
+                    ),
+                    display_dots,
+                )
+                    .chain(),
             )
             .add_systems(PostUpdate, record_previous_transform);
     }
@@ -102,7 +107,8 @@ pub fn finalize_dot(
     commands
         .entity(dot_entity)
         .insert(Mesh3d(dot_mesh.0.clone()))
-        .insert(MeshMaterial3d(ui_materials.dot.clone()));
+        .insert(MeshMaterial3d(ui_materials.dot.clone()))
+        .insert(MESH_VISIBILITY);
 
     setup_dot_observes(commands, ui_materials, dot_entity);
     return dot_entity;
@@ -163,4 +169,17 @@ pub fn move_on_drag(
     }
     let mut transform = transforms.get_mut(drag.target()).unwrap();
     transform.translation = cursor.position;
+}
+
+pub fn display_dots(dots: Query<&Transform, With<Dot>>, mut gizmos: Gizmos) {
+    for transform in dots.iter() {
+        gizmos.circle(
+            Isometry3d::new(
+                transform.translation,
+                Quat::from_rotation_arc(Vec3::Z, Dir3::Z.as_vec3()),
+            ),
+            DOT_RADIUS,
+            DOT_COLOR,
+        );
+    }
 }
