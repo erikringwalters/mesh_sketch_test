@@ -2,14 +2,14 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::*;
 
 use crate::{
-    assets::{colors::DOT_COLOR, materials::UIMaterials, visibility::MESH_VISIBILITY},
+    assets::{materials::UIMaterials, visibility::MESH_VISIBILITY},
     cursor::Cursor,
     reload::{ReloadLevel, Reloadable},
 };
 
 use super::{
     line::{handle_dot_end_hover, handle_dot_hover},
-    size::{DOT_MESH_RADIUS, DOT_RADIUS},
+    size::DOT_MESH_RADIUS,
     sketch::{Current, SketchMode, update_material_on},
 };
 
@@ -40,12 +40,8 @@ impl Plugin for DotPlugin {
         app.insert_resource(DotMeshHandle(dot_mesh_handle))
             .add_systems(
                 Update,
-                (
-                    spawn_dot.run_if(
-                        in_state(SketchMode::Dot).and(input_just_pressed(MouseButton::Left)),
-                    ),
-                    display_dots,
-                )
+                (spawn_dot
+                    .run_if(in_state(SketchMode::Dot).and(input_just_pressed(MouseButton::Left))),)
                     .chain(),
             )
             .add_systems(PostUpdate, record_previous_transform);
@@ -114,6 +110,7 @@ pub fn finalize_dot(
     return dot_entity;
 }
 
+#[hot]
 pub fn finalize_dots(
     mut commands: Commands,
     current: ResMut<Current>,
@@ -171,15 +168,15 @@ pub fn move_on_drag(
     transform.translation = cursor.position;
 }
 
-pub fn display_dots(dots: Query<&Transform, With<Dot>>, mut gizmos: Gizmos) {
-    for transform in dots.iter() {
-        gizmos.circle(
-            Isometry3d::new(
-                transform.translation,
-                Quat::from_rotation_arc(Vec3::Z, Dir3::Z.as_vec3()),
-            ),
-            DOT_RADIUS,
-            DOT_COLOR,
-        );
-    }
-}
+// pub fn display_dots(dots: Query<&Transform, With<Dot>>, mut gizmos: Gizmos) {
+//     for transform in dots.iter() {
+//         gizmos.circle(
+//             Isometry3d::new(
+//                 transform.translation,
+//                 Quat::from_rotation_arc(Vec3::Z, Dir3::Z.as_vec3()),
+//             ),
+//             DOT_RADIUS,
+//             DOT_COLOR,
+//         );
+//     }
+// }

@@ -61,6 +61,7 @@ fn handle_reload(
     }
 }
 
+#[hot]
 fn handle_setup(input: Res<ButtonInput<KeyCode>>, commands: Commands) {
     if input.pressed(KeyCode::ControlLeft) {
         setup(commands);

@@ -5,12 +5,27 @@ use bevy_simple_subsecond_system::hot;
 pub struct Cursor {
     pub position: Vec3,
 }
+
+#[derive(Resource)]
+pub struct CameraRay {
+    pub value: Ray3d,
+}
+
+impl Default for CameraRay {
+    fn default() -> Self {
+        CameraRay {
+            value: Ray3d::new(Vec3::Z, Dir3::Z),
+        }
+    }
+}
+
 pub struct CursorPlugin;
 
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Cursor::default())
-            .add_systems(Update, update_cursor); //, draw_cursor));
+            .insert_resource(CameraRay::default())
+            .add_systems(Update, (update_cursor, pick_mesh)); //, draw_cursor));
     }
 }
 
@@ -19,6 +34,7 @@ fn update_cursor(
     camera_query: Single<(&Camera, &GlobalTransform)>,
     windows: Query<&Window>,
     mut cursor: ResMut<Cursor>,
+    mut camera_ray: ResMut<CameraRay>,
 ) {
     let Ok(windows) = windows.single() else {
         return;
@@ -39,6 +55,9 @@ fn update_cursor(
     let Some(distance) = ray.intersect_plane(Vec3::ZERO, InfinitePlane3d::new(Dir3::Z)) else {
         return;
     };
+
+    camera_ray.value = ray;
+
     cursor.position = ray.get_point(distance);
 }
 
@@ -52,4 +71,17 @@ fn draw_cursor(mut gizmos: Gizmos, cursor: Res<Cursor>) {
         0.05,
         Color::WHITE,
     );
+}
+
+#[hot]
+pub fn pick_mesh(mut ray_cast: MeshRayCast, camera_ray: Res<CameraRay>) {
+    // Cast the ray and get the first hit
+    let Some((entity, hit)) = ray_cast
+        .cast_ray(camera_ray.value, &MeshRayCastSettings::default())
+        .first()
+    else {
+        return;
+    };
+
+    println!("entity: {:?}, hit: {:?}", entity, hit);
 }

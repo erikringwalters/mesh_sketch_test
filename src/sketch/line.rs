@@ -48,6 +48,7 @@ impl Plugin for LinePlugin {
                     ),
                     handle_move_current_line.run_if(in_state(SketchMode::Line)),
                     update_line_transforms,
+                    // display_dots,
                     display_lines,
                 )
                     .chain(),
@@ -308,7 +309,6 @@ pub fn clear_redundant(
             warn!("Clearing redundant line: {:?}", checked_line);
             checked.lines.clear();
             commands.entity(checked_line).despawn();
-            println!("");
             return;
         }
     }
