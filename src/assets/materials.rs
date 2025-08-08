@@ -20,7 +20,7 @@ impl Plugin for MaterialsPlugin {
 
 pub fn setup_ui_materials(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>) {
     commands.insert_resource(UIMaterials {
-        dot: materials.add(ui_material(SUNRISE_ORANGE)),
+        dot: materials.add(ui_material(CREAMSICLE_ORANGE)),
         line: materials.add(ui_material(LINE)),
         hover: materials.add(ui_material(HOVER)),
         pressed: materials.add(ui_material(PRESSED)),

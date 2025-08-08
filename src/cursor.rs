@@ -25,7 +25,7 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Cursor::default())
             .insert_resource(CameraRay::default())
-            .add_systems(Update, (update_cursor, pick_mesh)); //, draw_cursor));
+            .add_systems(PreUpdate, (update_cursor, pick_mesh)); //, draw_cursor));
     }
 }
 
