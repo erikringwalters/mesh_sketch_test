@@ -84,7 +84,8 @@ impl Plugin for SketchPlugin {
                     change_sketch_mode,
                     reset_current.run_if(input_just_pressed(MouseButton::Right)),
                     update_to_hover_material.run_if(in_state(SketchMode::None)),
-                    update_to_default_material,
+                    update_dots_to_default_material,
+                    update_lines_to_default_material,
                 )
                     .chain(),
             );
@@ -160,11 +161,10 @@ pub fn update_to_hover_material(
 }
 
 #[hot]
-pub fn update_to_default_material(
+pub fn update_dots_to_default_material(
     mut picking: ResMut<Picking>,
     ui_materials: Res<UIMaterials>,
-    mut dots: Query<&mut MeshMaterial3d<StandardMaterial>, (With<Dot>, Without<Line>)>,
-    mut lines: Query<&mut MeshMaterial3d<StandardMaterial>, (With<Line>, Without<Dot>)>,
+    mut dots: Query<&mut MeshMaterial3d<StandardMaterial>, With<Dot>>,
 ) {
     if picking.prev_hovered == picking.hovered || picking.prev_hovered == Entity::PLACEHOLDER {
         return;
@@ -172,7 +172,23 @@ pub fn update_to_default_material(
 
     if let Ok(mut material) = dots.get_mut(picking.prev_hovered) {
         material.0 = ui_materials.dot.clone();
-    } else if let Ok(mut material) = lines.get_mut(picking.prev_hovered) {
+    } else {
+        return;
+    };
+    picking.prev_hovered = Entity::PLACEHOLDER;
+}
+
+#[hot]
+pub fn update_lines_to_default_material(
+    mut picking: ResMut<Picking>,
+    ui_materials: Res<UIMaterials>,
+    mut lines: Query<&mut MeshMaterial3d<StandardMaterial>, With<Line>>,
+) {
+    if picking.prev_hovered == picking.hovered || picking.prev_hovered == Entity::PLACEHOLDER {
+        return;
+    }
+
+    if let Ok(mut material) = lines.get_mut(picking.prev_hovered) {
         material.0 = ui_materials.line.clone();
     } else {
         return;

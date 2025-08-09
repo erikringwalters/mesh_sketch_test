@@ -8,7 +8,6 @@ use crate::{
 };
 
 use super::{
-    line::{handle_dot_end_hover, handle_dot_hover},
     size::DOT_MESH_RADIUS,
     sketch::{Current, SketchMode},
 };
@@ -55,17 +54,17 @@ pub fn spawn_dot(
     ui_materials: Res<UIMaterials>,
     cursor: Res<Cursor>,
 ) {
-    let dot_entity = commands
-        .spawn((
-            Dot::default(),
-            Mesh3d(dot_mesh.0.clone()),
-            MeshMaterial3d(ui_materials.dot.clone()),
-            Reloadable {
-                level: ReloadLevel::Hard,
-            },
-            Transform::from_translation(cursor.position),
-        ))
-        .id();
+    // let dot_entity =
+    commands.spawn((
+        Dot::default(),
+        Mesh3d(dot_mesh.0.clone()),
+        MeshMaterial3d(ui_materials.dot.clone()),
+        Reloadable {
+            level: ReloadLevel::Hard,
+        },
+        Transform::from_translation(cursor.position),
+    ));
+    // .id();
     // setup_dot_observes(&mut commands, &ui_materials, dot_entity);
 }
 

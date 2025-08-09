@@ -7,7 +7,7 @@ pub struct UIMaterials {
     pub dot: Handle<StandardMaterial>,
     pub line: Handle<StandardMaterial>,
     pub hover: Handle<StandardMaterial>,
-    pub pressed: Handle<StandardMaterial>,
+    // pub pressed: Handle<StandardMaterial>,
 }
 pub struct MaterialsPlugin;
 
@@ -23,7 +23,7 @@ pub fn setup_ui_materials(mut commands: Commands, mut materials: ResMut<Assets<S
         dot: materials.add(ui_material(CREAMSICLE_ORANGE)),
         line: materials.add(ui_material(LINE)),
         hover: materials.add(ui_material(HOVER)),
-        pressed: materials.add(ui_material(PRESSED)),
+        // pressed: materials.add(ui_material(PRESSED)),
     });
 }
 
