@@ -1,7 +1,13 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::*;
 
-use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
+use crate::{assets::materials::UIMaterials, cursor::Picking};
+
+use super::{
+    dot::{Dot, DotPlugin},
+    line::{Line, LinePlugin},
+    size::LINE_WIDTH,
+};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
 // use super::circle::{CirclePlugin, handle_sketch_circle};
@@ -77,6 +83,8 @@ impl Plugin for SketchPlugin {
                 (
                     change_sketch_mode,
                     reset_current.run_if(input_just_pressed(MouseButton::Right)),
+                    update_to_hover_material.run_if(in_state(SketchMode::None)),
+                    update_to_default_material,
                 )
                     .chain(),
             );
@@ -124,16 +132,50 @@ pub fn is_defined(value: Vec3) -> bool {
     value != DEFAULT_POS
 }
 
+// #[hot]
+// pub fn update_material_on<E>(
+//     new_material: Handle<StandardMaterial>,
+// ) -> impl Fn(Trigger<E>, Query<&mut MeshMaterial3d<StandardMaterial>>) {
+//     // An observer closure that captures `new_material`. We do this to avoid needing to write many
+//     // versions of this observer, each triggered by a different event and with a different hardcoded
+//     // material. Instead, the event type is a generic, and the material is passed in.
+//     move |trigger, mut query| {
+//         if let Ok(mut material) = query.get_mut(trigger.target()) {
+//             material.0 = new_material.clone();
+//         }
+//     }
+// }
+
 #[hot]
-pub fn update_material_on<E>(
-    new_material: Handle<StandardMaterial>,
-) -> impl Fn(Trigger<E>, Query<&mut MeshMaterial3d<StandardMaterial>>) {
-    // An observer closure that captures `new_material`. We do this to avoid needing to write many
-    // versions of this observer, each triggered by a different event and with a different hardcoded
-    // material. Instead, the event type is a generic, and the material is passed in.
-    move |trigger, mut query| {
-        if let Ok(mut material) = query.get_mut(trigger.target()) {
-            material.0 = new_material.clone();
-        }
+pub fn update_to_hover_material(
+    picking: Res<Picking>,
+    ui_materials: Res<UIMaterials>,
+    mut query: Query<&mut MeshMaterial3d<StandardMaterial>>,
+) {
+    if let Ok(mut material) = query.get_mut(picking.hovered) {
+        material.0 = ui_materials.hover.clone();
+    } else {
+        return;
+    };
+}
+
+#[hot]
+pub fn update_to_default_material(
+    mut picking: ResMut<Picking>,
+    ui_materials: Res<UIMaterials>,
+    mut dots: Query<&mut MeshMaterial3d<StandardMaterial>, (With<Dot>, Without<Line>)>,
+    mut lines: Query<&mut MeshMaterial3d<StandardMaterial>, (With<Line>, Without<Dot>)>,
+) {
+    if picking.prev_hovered == picking.hovered || picking.prev_hovered == Entity::PLACEHOLDER {
+        return;
     }
+
+    if let Ok(mut material) = dots.get_mut(picking.prev_hovered) {
+        material.0 = ui_materials.dot.clone();
+    } else if let Ok(mut material) = lines.get_mut(picking.prev_hovered) {
+        material.0 = ui_materials.line.clone();
+    } else {
+        return;
+    };
+    picking.prev_hovered = Entity::PLACEHOLDER;
 }

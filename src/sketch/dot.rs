@@ -10,7 +10,7 @@ use crate::{
 use super::{
     line::{handle_dot_end_hover, handle_dot_hover},
     size::DOT_MESH_RADIUS,
-    sketch::{Current, SketchMode, update_material_on},
+    sketch::{Current, SketchMode},
 };
 
 #[derive(Debug, Default, PartialEq)]
@@ -66,7 +66,7 @@ pub fn spawn_dot(
             Transform::from_translation(cursor.position),
         ))
         .id();
-    setup_dot_observes(&mut commands, &ui_materials, dot_entity);
+    // setup_dot_observes(&mut commands, &ui_materials, dot_entity);
 }
 
 #[hot]
@@ -106,7 +106,7 @@ pub fn finalize_dot(
         .insert(MeshMaterial3d(ui_materials.dot.clone()))
         .insert(MESH_VISIBILITY);
 
-    setup_dot_observes(commands, ui_materials, dot_entity);
+    // setup_dot_observes(commands, ui_materials, dot_entity);
     return dot_entity;
 }
 
@@ -123,28 +123,28 @@ pub fn finalize_dots(
     }
 }
 
-#[hot]
-pub fn setup_dot_observes(
-    commands: &mut Commands,
-    ui_materials: &Res<UIMaterials>,
-    dot_entity: Entity,
-) {
-    commands
-        .entity(dot_entity)
-        .observe(update_material_on::<Pointer<Over>>(
-            ui_materials.hover.clone(),
-        ))
-        .observe(update_material_on::<Pointer<Out>>(ui_materials.dot.clone()))
-        .observe(update_material_on::<Pointer<Pressed>>(
-            ui_materials.pressed.clone(),
-        ))
-        .observe(update_material_on::<Pointer<Released>>(
-            ui_materials.hover.clone(),
-        ))
-        .observe(move_on_drag)
-        .observe(handle_dot_hover)
-        .observe(handle_dot_end_hover);
-}
+// #[hot]
+// pub fn setup_dot_observes(
+//     commands: &mut Commands,
+//     ui_materials: &Res<UIMaterials>,
+//     dot_entity: Entity,
+// ) {
+//     commands
+//         .entity(dot_entity)
+//         .observe(update_material_on::<Pointer<Over>>(
+//             ui_materials.hover.clone(),
+//         ))
+//         .observe(update_material_on::<Pointer<Out>>(ui_materials.dot.clone()))
+//         .observe(update_material_on::<Pointer<Pressed>>(
+//             ui_materials.pressed.clone(),
+//         ))
+//         .observe(update_material_on::<Pointer<Released>>(
+//             ui_materials.hover.clone(),
+//         ))
+//         .observe(move_on_drag)
+//         .observe(handle_dot_hover)
+//         .observe(handle_dot_end_hover);
+// }
 
 #[hot]
 pub fn record_previous_transform(mut dots: Query<(&mut Dot, &Transform)>) {

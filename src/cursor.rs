@@ -7,14 +7,18 @@ pub struct Cursor {
 }
 
 #[derive(Resource)]
-pub struct CameraRay {
-    pub value: Ray3d,
+pub struct Picking {
+    pub ray: Ray3d,
+    pub hovered: Entity,
+    pub prev_hovered: Entity,
 }
 
-impl Default for CameraRay {
+impl Default for Picking {
     fn default() -> Self {
-        CameraRay {
-            value: Ray3d::new(Vec3::Z, Dir3::Z),
+        Picking {
+            ray: Ray3d::new(Vec3::Z, Dir3::Z),
+            hovered: Entity::PLACEHOLDER,
+            prev_hovered: Entity::PLACEHOLDER,
         }
     }
 }
@@ -24,8 +28,8 @@ pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Cursor::default())
-            .insert_resource(CameraRay::default())
-            .add_systems(PreUpdate, (update_cursor, pick_mesh)); //, draw_cursor));
+            .insert_resource(Picking::default())
+            .add_systems(PreUpdate, (update_cursor, pick_mesh)); //, draw_cursor;
     }
 }
 
@@ -34,7 +38,7 @@ fn update_cursor(
     camera_query: Single<(&Camera, &GlobalTransform)>,
     windows: Query<&Window>,
     mut cursor: ResMut<Cursor>,
-    mut camera_ray: ResMut<CameraRay>,
+    mut picking: ResMut<Picking>,
 ) {
     let Ok(windows) = windows.single() else {
         return;
@@ -56,7 +60,7 @@ fn update_cursor(
         return;
     };
 
-    camera_ray.value = ray;
+    picking.ray = ray;
 
     cursor.position = ray.get_point(distance);
 }
@@ -74,14 +78,17 @@ fn draw_cursor(mut gizmos: Gizmos, cursor: Res<Cursor>) {
 }
 
 #[hot]
-pub fn pick_mesh(mut ray_cast: MeshRayCast, camera_ray: Res<CameraRay>) {
+pub fn pick_mesh(mut ray_cast: MeshRayCast, mut picking: ResMut<Picking>) {
     // Cast the ray and get the first hit
-    let Some((entity, hit)) = ray_cast
-        .cast_ray(camera_ray.value, &MeshRayCastSettings::default())
+    // println!("picking.selection: {:?}", picking.selection);
+    let Some((entity, _)) = ray_cast
+        .cast_ray(picking.ray, &MeshRayCastSettings::default())
         .first()
     else {
+        picking.prev_hovered = picking.hovered;
+        picking.hovered = Entity::PLACEHOLDER;
         return;
     };
-
-    println!("entity: {:?}\nhit pos: {:?}", entity, hit.point);
+    picking.prev_hovered = picking.hovered;
+    picking.hovered = *entity;
 }
