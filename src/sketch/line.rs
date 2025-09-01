@@ -3,20 +3,25 @@ use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::*;
 
-use crate::assets::colors::LINE;
-use crate::assets::materials::UIMaterials;
+use crate::assets::colors::*;
+use crate::assets::materials::{UIMaterialProvider, UIMaterials};
 use crate::assets::visibility::MESH_VISIBILITY;
-use crate::cursor::Cursor;
+use crate::cursor::{Cursor, Picking};
 
 use super::dot::{Dot, finalize_dots, spawn_temporary_dot};
 use super::size::LINE_MESH_WIDTH;
-use super::sketch::{Checked, Selected};
-use super::sketch::{Current, SketchMode};
+use super::sketch::{Checked, Current, SketchMode};
 
 #[derive(Component, Debug, PartialEq)]
 pub struct Line {
     pub start: Entity,
     pub end: Entity,
+}
+
+impl UIMaterialProvider for Line {
+    fn get_material(ui_materials: &UIMaterials) -> Handle<StandardMaterial> {
+        ui_materials.line.clone()
+    }
 }
 
 #[derive(Resource, Debug)]
@@ -61,7 +66,7 @@ pub fn handle_sketch_line(
     mut commands: Commands,
     cursor: Res<Cursor>,
     mut current: ResMut<Current>,
-    selected: Res<Selected>,
+    picking: Res<Picking>,
     mut checked: ResMut<Checked>,
     lines: Query<&mut Line>,
 ) {
@@ -71,28 +76,28 @@ pub fn handle_sketch_line(
         prev_line = current.lines[0];
     }
 
-    let curr_empty = current.dots.is_empty();
-    let slct_empty = selected.dots.is_empty();
+    let current_empty = current.dots.is_empty();
+    let hover_empty = picking.hovered == Entity::PLACEHOLDER;
 
     // New chain starting with new dot
-    if curr_empty && slct_empty {
+    if current_empty && hover_empty {
         start_dot = spawn_temporary_dot(&mut commands, cursor.position);
         current.dots.push(start_dot);
     }
     // Continue chain with new dot
-    else if !curr_empty && slct_empty {
+    else if !current_empty && hover_empty {
         start_dot = *current.dots.last().unwrap();
         current.dots.clear();
     }
     // New chain starting with existing dot
-    else if curr_empty && !slct_empty {
-        start_dot = selected.dots[0];
+    else if current_empty && !hover_empty {
+        start_dot = picking.hovered;
         current.dots.clear();
     }
     // Continue chain with existing dot
     else {
-        let temp_dot = swap_line_end(selected.dots[0], &mut current, lines);
-        start_dot = selected.dots[0];
+        let temp_dot = swap_line_end(picking.hovered, &mut current, lines);
+        start_dot = picking.hovered;
         current.dots.clear();
         commands.entity(temp_dot).despawn();
     }
@@ -126,12 +131,7 @@ pub fn handle_move_current_line(
 
 #[hot]
 fn spawn_line(commands: &mut Commands, start: Entity, end: Entity) -> Entity {
-    commands
-        .spawn(Line {
-            start: start,
-            end: end,
-        })
-        .id()
+    commands.spawn(Line { start, end }).id()
 }
 
 #[hot]
@@ -143,19 +143,12 @@ fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform
         let Ok(end_position) = dots.get(line.end) else {
             continue;
         };
-        gizmos.line(start_position.translation, end_position.translation, LINE);
+        gizmos.line(
+            start_position.translation,
+            end_position.translation,
+            color_from_hex(LINE),
+        );
     }
-}
-
-#[hot]
-pub fn handle_dot_hover(hover: Trigger<Pointer<Over>>, mut selected: ResMut<Selected>) {
-    selected.dots.clear();
-    selected.dots.push(hover.target());
-}
-
-#[hot]
-pub fn handle_dot_end_hover(_hover: Trigger<Pointer<Out>>, mut selected: ResMut<Selected>) {
-    selected.dots.clear();
 }
 
 #[hot]
@@ -188,7 +181,7 @@ pub fn finalize_line(
         Mesh3d(line_mesh.0.clone()),
         MeshMaterial3d(ui_materials.line.clone()),
         MESH_VISIBILITY,
-        Transform::from(transform),
+        transform,
     ));
 }
 
@@ -225,7 +218,7 @@ pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
     Transform {
         translation: center,
         rotation: quat,
-        scale: scale,
+        scale,
     }
 }
 
@@ -241,13 +234,6 @@ pub fn update_line_transforms(
         let Ok(end) = dots.get(line.end) else {
             continue;
         };
-        // let prev_start = start.0.prev_transform;
-        // let prev_end = end.0.prev_transform;
-
-        // // Return if no change in dot transforms
-        // if &prev_start == start.1 && &prev_end == end.1 {
-        //     return;
-        // }
 
         let mesh_transform = get_line_mesh_transform(*start.1, *end.1);
         *transform = mesh_transform;

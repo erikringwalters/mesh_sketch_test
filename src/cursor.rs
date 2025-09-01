@@ -1,5 +1,10 @@
+use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::hot;
+
+use crate::assets::materials::ChangingMaterial;
+use crate::schedule::ScheduleSet;
+use crate::sketch::selection::{deselect_other_entities, toggle_select_entity};
 
 #[derive(Resource, Default)]
 pub struct Cursor {
@@ -29,7 +34,18 @@ impl Plugin for CursorPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Cursor::default())
             .insert_resource(Picking::default())
-            .add_systems(PreUpdate, (update_cursor, pick_mesh)); //, draw_cursor;
+            .add_systems(
+                Update,
+                (
+                    update_cursor,
+                    hover_entity,
+                    insert_changing_material,
+                    toggle_select_entity.run_if(input_just_pressed(MouseButton::Left)),
+                    deselect_other_entities.run_if(input_just_pressed(MouseButton::Left)),
+                )
+                    .chain()
+                    .in_set(ScheduleSet::UserInput),
+            );
     }
 }
 
@@ -61,7 +77,6 @@ fn update_cursor(
     };
 
     picking.ray = ray;
-
     cursor.position = ray.get_point(distance);
 }
 
@@ -91,4 +106,29 @@ pub fn pick_mesh(mut ray_cast: MeshRayCast, mut picking: ResMut<Picking>) {
     };
     picking.prev_hovered = picking.hovered;
     picking.hovered = *entity;
+}
+
+pub fn hover_entity(mut ray_cast: MeshRayCast, mut picking: ResMut<Picking>) {
+    // Cast the ray and get the first hit
+    let Some((entity, _)) = ray_cast
+        .cast_ray(picking.ray, &MeshRayCastSettings::default())
+        .first()
+    else {
+        picking.prev_hovered = picking.hovered;
+        picking.hovered = Entity::PLACEHOLDER;
+        return;
+    };
+    picking.prev_hovered = picking.hovered;
+    picking.hovered = *entity;
+}
+
+pub fn insert_changing_material(mut commands: Commands, picking: ResMut<Picking>) {
+    if picking.hovered != picking.prev_hovered && picking.hovered != Entity::PLACEHOLDER {
+        commands.entity(picking.hovered).insert(ChangingMaterial);
+    }
+    if picking.prev_hovered != picking.hovered && picking.prev_hovered != Entity::PLACEHOLDER {
+        commands
+            .entity(picking.prev_hovered)
+            .insert(ChangingMaterial);
+    }
 }

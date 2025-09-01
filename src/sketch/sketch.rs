@@ -1,13 +1,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::*;
 
-use crate::{assets::materials::UIMaterials, cursor::Picking};
-
-use super::{
-    dot::{Dot, DotPlugin},
-    line::{Line, LinePlugin},
-    size::LINE_WIDTH,
-};
+use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
 // use super::circle::{CirclePlugin, handle_sketch_circle};
@@ -24,30 +18,12 @@ pub enum SketchMode {
     Arc,
 }
 
-// #[derive(Debug)]
-// pub enum Angle {
-//     Custom,
-//     Horizontal,
-//     Vertical,
-// }
-
-// #[derive(Component, Debug)]
-// pub struct Constraint {
-//     angle: Angle,
-// }
-
 // pub const DEFAULT_RESOLUTION: u32 = 64;
 pub const DEFAULT_POS: Vec3 = Vec3::splat(f32::MIN);
 
 #[derive(Resource, Debug, PartialEq)]
 pub struct Current {
     pub position: [Vec3; 3],
-    pub dots: Vec<Entity>,
-    pub lines: Vec<Entity>,
-}
-
-#[derive(Resource, Debug, Default, PartialEq)]
-pub struct Selected {
     pub dots: Vec<Entity>,
     pub lines: Vec<Entity>,
 }
@@ -73,7 +49,6 @@ impl Plugin for SketchPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<SketchMode>()
             .insert_resource(Current::default())
-            .insert_resource(Selected::default())
             .insert_resource(Checked::default())
             .add_plugins(DotPlugin)
             .add_plugins(LinePlugin)
@@ -83,9 +58,6 @@ impl Plugin for SketchPlugin {
                 (
                     change_sketch_mode,
                     reset_current.run_if(input_just_pressed(MouseButton::Right)),
-                    update_to_hover_material.run_if(in_state(SketchMode::None)),
-                    update_dots_to_default_material,
-                    update_lines_to_default_material,
                 )
                     .chain(),
             );
@@ -131,67 +103,4 @@ pub fn reset_current(mut commands: Commands, mut current: ResMut<Current>) {
 #[hot]
 pub fn is_defined(value: Vec3) -> bool {
     value != DEFAULT_POS
-}
-
-// #[hot]
-// pub fn update_material_on<E>(
-//     new_material: Handle<StandardMaterial>,
-// ) -> impl Fn(Trigger<E>, Query<&mut MeshMaterial3d<StandardMaterial>>) {
-//     // An observer closure that captures `new_material`. We do this to avoid needing to write many
-//     // versions of this observer, each triggered by a different event and with a different hardcoded
-//     // material. Instead, the event type is a generic, and the material is passed in.
-//     move |trigger, mut query| {
-//         if let Ok(mut material) = query.get_mut(trigger.target()) {
-//             material.0 = new_material.clone();
-//         }
-//     }
-// }
-
-#[hot]
-pub fn update_to_hover_material(
-    picking: Res<Picking>,
-    ui_materials: Res<UIMaterials>,
-    mut query: Query<&mut MeshMaterial3d<StandardMaterial>>,
-) {
-    if let Ok(mut material) = query.get_mut(picking.hovered) {
-        material.0 = ui_materials.hover.clone();
-    } else {
-        return;
-    };
-}
-
-#[hot]
-pub fn update_dots_to_default_material(
-    mut picking: ResMut<Picking>,
-    ui_materials: Res<UIMaterials>,
-    mut dots: Query<&mut MeshMaterial3d<StandardMaterial>, With<Dot>>,
-) {
-    if picking.prev_hovered == picking.hovered || picking.prev_hovered == Entity::PLACEHOLDER {
-        return;
-    }
-
-    if let Ok(mut material) = dots.get_mut(picking.prev_hovered) {
-        material.0 = ui_materials.dot.clone();
-    } else {
-        return;
-    };
-    picking.prev_hovered = Entity::PLACEHOLDER;
-}
-
-#[hot]
-pub fn update_lines_to_default_material(
-    mut picking: ResMut<Picking>,
-    ui_materials: Res<UIMaterials>,
-    mut lines: Query<&mut MeshMaterial3d<StandardMaterial>, With<Line>>,
-) {
-    if picking.prev_hovered == picking.hovered || picking.prev_hovered == Entity::PLACEHOLDER {
-        return;
-    }
-
-    if let Ok(mut material) = lines.get_mut(picking.prev_hovered) {
-        material.0 = ui_materials.line.clone();
-    } else {
-        return;
-    };
-    picking.prev_hovered = Entity::PLACEHOLDER;
 }

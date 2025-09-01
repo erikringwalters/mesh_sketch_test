@@ -2,7 +2,10 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::*;
 
 use crate::{
-    assets::{materials::UIMaterials, visibility::MESH_VISIBILITY},
+    assets::{
+        materials::{UIMaterialProvider, UIMaterials},
+        visibility::MESH_VISIBILITY,
+    },
     cursor::Cursor,
     reload::{ReloadLevel, Reloadable},
 };
@@ -22,7 +25,12 @@ enum DotMode {
 #[derive(Component, Debug, Default)]
 pub struct Dot {
     mode: DotMode,
-    pub prev_transform: Transform,
+}
+
+impl UIMaterialProvider for Dot {
+    fn get_material(ui_materials: &UIMaterials) -> Handle<StandardMaterial> {
+        ui_materials.dot.clone()
+    }
 }
 
 #[derive(Resource, Debug)]
@@ -42,8 +50,7 @@ impl Plugin for DotPlugin {
                 (spawn_dot
                     .run_if(in_state(SketchMode::Dot).and(input_just_pressed(MouseButton::Left))),)
                     .chain(),
-            )
-            .add_systems(PostUpdate, record_previous_transform);
+            );
     }
 }
 
@@ -74,7 +81,6 @@ pub fn spawn_temporary_dot(commands: &mut Commands, position: Vec3) -> Entity {
         .spawn((
             Dot {
                 mode: DotMode::Temporary,
-                prev_transform: Transform::default(),
             },
             Reloadable {
                 level: ReloadLevel::Hard,
@@ -121,61 +127,3 @@ pub fn finalize_dots(
         finalize_dot(&mut commands, &dot_mesh, &ui_materials, *dot, &mut dots);
     }
 }
-
-// #[hot]
-// pub fn setup_dot_observes(
-//     commands: &mut Commands,
-//     ui_materials: &Res<UIMaterials>,
-//     dot_entity: Entity,
-// ) {
-//     commands
-//         .entity(dot_entity)
-//         .observe(update_material_on::<Pointer<Over>>(
-//             ui_materials.hover.clone(),
-//         ))
-//         .observe(update_material_on::<Pointer<Out>>(ui_materials.dot.clone()))
-//         .observe(update_material_on::<Pointer<Pressed>>(
-//             ui_materials.pressed.clone(),
-//         ))
-//         .observe(update_material_on::<Pointer<Released>>(
-//             ui_materials.hover.clone(),
-//         ))
-//         .observe(move_on_drag)
-//         .observe(handle_dot_hover)
-//         .observe(handle_dot_end_hover);
-// }
-
-#[hot]
-pub fn record_previous_transform(mut dots: Query<(&mut Dot, &Transform)>) {
-    for (mut dot, transform) in dots.iter_mut() {
-        dot.prev_transform = *transform;
-    }
-}
-
-#[hot]
-pub fn move_on_drag(
-    drag: Trigger<Pointer<Drag>>,
-    cursor: Res<Cursor>,
-    state: ResMut<State<SketchMode>>,
-    mut transforms: Query<&mut Transform>,
-) {
-    // TODO: Consider a more reliably scheduled way to move dots
-    if state.get().ne(&SketchMode::None) {
-        return;
-    }
-    let mut transform = transforms.get_mut(drag.target()).unwrap();
-    transform.translation = cursor.position;
-}
-
-// pub fn display_dots(dots: Query<&Transform, With<Dot>>, mut gizmos: Gizmos) {
-//     for transform in dots.iter() {
-//         gizmos.circle(
-//             Isometry3d::new(
-//                 transform.translation,
-//                 Quat::from_rotation_arc(Vec3::Z, Dir3::Z.as_vec3()),
-//             ),
-//             DOT_RADIUS,
-//             DOT,
-//         );
-//     }
-// }
