@@ -7,7 +7,6 @@ mod sketch;
 use self::schedule::SchedulePlugin;
 use assets::materials::MaterialsPlugin;
 use bevy::{prelude::*, render::camera::ScalingMode, window::PresentMode};
-use bevy_simple_subsecond_system::*;
 use cursor::CursorPlugin;
 use reload::{ReloadPlugin, Reloadable};
 use sketch::sketch::SketchPlugin;
@@ -23,8 +22,6 @@ fn main() {
             }),
             ..default()
         }))
-        // .add_plugins(MeshPickingPlugin)
-        .add_plugins(SimpleSubsecondPlugin::default())
         .add_plugins(SchedulePlugin)
         .add_plugins(CursorPlugin)
         .add_plugins(ReloadPlugin)
@@ -34,7 +31,6 @@ fn main() {
         .run();
 }
 
-#[hot]
 pub fn setup(mut commands: Commands) {
     commands.spawn((
         Camera3d::default(),

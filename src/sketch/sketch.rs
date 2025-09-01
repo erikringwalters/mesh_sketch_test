@@ -1,5 +1,4 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use bevy_simple_subsecond_system::*;
 
 use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
 
@@ -64,13 +63,11 @@ impl Plugin for SketchPlugin {
     }
 }
 
-#[hot]
 fn sketch_setup(mut gizmo_store: ResMut<GizmoConfigStore>) {
     let config = gizmo_store.config_mut::<DefaultGizmoConfigGroup>().0;
     config.line.width = LINE_WIDTH;
 }
 
-#[hot]
 fn change_sketch_mode(
     commands: Commands,
     keyboard: Res<ButtonInput<KeyCode>>,
@@ -89,7 +86,6 @@ fn change_sketch_mode(
     }
 }
 
-#[hot]
 pub fn reset_current(mut commands: Commands, mut current: ResMut<Current>) {
     for entity in &current.lines {
         commands.entity(*entity).despawn();
@@ -98,9 +94,4 @@ pub fn reset_current(mut commands: Commands, mut current: ResMut<Current>) {
         commands.entity(*entity).despawn();
     }
     *current = Current::default();
-}
-
-#[hot]
-pub fn is_defined(value: Vec3) -> bool {
-    value != DEFAULT_POS
 }

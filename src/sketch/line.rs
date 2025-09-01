@@ -1,7 +1,6 @@
 use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
-use bevy_simple_subsecond_system::*;
 
 use crate::assets::colors::*;
 use crate::assets::materials::{UIMaterialProvider, UIMaterials};
@@ -61,7 +60,6 @@ impl Plugin for LinePlugin {
     }
 }
 
-#[hot]
 pub fn handle_sketch_line(
     mut commands: Commands,
     cursor: Res<Cursor>,
@@ -113,7 +111,6 @@ pub fn handle_sketch_line(
     checked.lines.push(prev_line);
 }
 
-#[hot]
 pub fn handle_move_current_line(
     cursor: Res<Cursor>,
     current: ResMut<Current>,
@@ -129,12 +126,10 @@ pub fn handle_move_current_line(
     }
 }
 
-#[hot]
 fn spawn_line(commands: &mut Commands, start: Entity, end: Entity) -> Entity {
     commands.spawn(Line { start, end }).id()
 }
 
-#[hot]
 fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform>) {
     for line in lines.iter() {
         let Ok(start_position) = dots.get(line.start) else {
@@ -151,7 +146,6 @@ fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform
     }
 }
 
-#[hot]
 pub fn swap_line_end(
     next: Entity,
     current: &mut ResMut<Current>,
@@ -165,7 +159,6 @@ pub fn swap_line_end(
     return prev;
 }
 
-#[hot]
 pub fn finalize_line(
     commands: &mut Commands,
     line_mesh: &Res<LineMeshHandle>,
@@ -185,7 +178,6 @@ pub fn finalize_line(
     ));
 }
 
-#[hot]
 pub fn get_line_ending_positions(
     line_entity: Entity,
     lines: &mut Query<&mut Line>,
@@ -205,7 +197,6 @@ pub fn get_line_ending_positions(
     return transforms;
 }
 
-#[hot]
 pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
     let a = start.translation;
     let b = end.translation;
@@ -222,7 +213,6 @@ pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
     }
 }
 
-#[hot]
 pub fn update_line_transforms(
     mut lines: Query<(&Line, &mut Transform)>,
     dots: Query<(&Dot, &Transform), Without<Line>>,
@@ -240,7 +230,6 @@ pub fn update_line_transforms(
     }
 }
 
-#[hot]
 pub fn finalize_lines(
     mut commands: Commands,
     current: ResMut<Current>,
@@ -261,7 +250,6 @@ pub fn finalize_lines(
     }
 }
 
-#[hot]
 pub fn clear_redundant(
     mut commands: Commands,
     mut checked: ResMut<Checked>,

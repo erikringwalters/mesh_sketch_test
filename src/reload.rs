@@ -1,5 +1,4 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use bevy_simple_subsecond_system::hot;
 
 use crate::{
     setup,
@@ -33,7 +32,6 @@ impl Plugin for ReloadPlugin {
     }
 }
 
-#[hot]
 fn handle_reload(
     input: Res<ButtonInput<KeyCode>>,
     mut commands: Commands,
@@ -61,7 +59,6 @@ fn handle_reload(
     }
 }
 
-#[hot]
 fn handle_setup(input: Res<ButtonInput<KeyCode>>, commands: Commands) {
     if input.pressed(KeyCode::ControlLeft) {
         setup(commands);

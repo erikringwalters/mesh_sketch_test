@@ -1,5 +1,4 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use bevy_simple_subsecond_system::*;
 
 use crate::{
     assets::{
@@ -54,7 +53,6 @@ impl Plugin for DotPlugin {
     }
 }
 
-#[hot]
 pub fn spawn_dot(
     mut commands: Commands,
     dot_mesh: Res<DotMeshHandle>,
@@ -75,7 +73,6 @@ pub fn spawn_dot(
     // setup_dot_observes(&mut commands, &ui_materials, dot_entity);
 }
 
-#[hot]
 pub fn spawn_temporary_dot(commands: &mut Commands, position: Vec3) -> Entity {
     commands
         .spawn((
@@ -90,7 +87,6 @@ pub fn spawn_temporary_dot(commands: &mut Commands, position: Vec3) -> Entity {
         .id()
 }
 
-#[hot]
 pub fn finalize_dot(
     commands: &mut Commands,
     dot_mesh: &Res<DotMeshHandle>,
@@ -115,7 +111,6 @@ pub fn finalize_dot(
     return dot_entity;
 }
 
-#[hot]
 pub fn finalize_dots(
     mut commands: Commands,
     current: ResMut<Current>,

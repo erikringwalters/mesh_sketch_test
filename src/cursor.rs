@@ -1,10 +1,10 @@
 use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
-use bevy_simple_subsecond_system::hot;
 
 use crate::assets::materials::ChangingMaterial;
 use crate::schedule::ScheduleSet;
 use crate::sketch::selection::{deselect_other_entities, toggle_select_entity};
+use crate::sketch::sketch::SketchMode;
 
 #[derive(Resource, Default)]
 pub struct Cursor {
@@ -40,7 +40,9 @@ impl Plugin for CursorPlugin {
                     update_cursor,
                     hover_entity,
                     insert_changing_material,
-                    toggle_select_entity.run_if(input_just_pressed(MouseButton::Left)),
+                    toggle_select_entity.run_if(
+                        in_state(SketchMode::None).and(input_just_pressed(MouseButton::Left)),
+                    ),
                     deselect_other_entities.run_if(input_just_pressed(MouseButton::Left)),
                 )
                     .chain()
@@ -49,7 +51,6 @@ impl Plugin for CursorPlugin {
     }
 }
 
-#[hot]
 fn update_cursor(
     camera_query: Single<(&Camera, &GlobalTransform)>,
     windows: Query<&Window>,
@@ -78,34 +79,6 @@ fn update_cursor(
 
     picking.ray = ray;
     cursor.position = ray.get_point(distance);
-}
-
-#[hot]
-fn draw_cursor(mut gizmos: Gizmos, cursor: Res<Cursor>) {
-    gizmos.circle(
-        Isometry3d::new(
-            cursor.position,
-            Quat::from_rotation_arc(Vec3::Z, Dir3::Z.as_vec3()),
-        ),
-        0.05,
-        Color::WHITE,
-    );
-}
-
-#[hot]
-pub fn pick_mesh(mut ray_cast: MeshRayCast, mut picking: ResMut<Picking>) {
-    // Cast the ray and get the first hit
-    // println!("picking.selection: {:?}", picking.selection);
-    let Some((entity, _)) = ray_cast
-        .cast_ray(picking.ray, &MeshRayCastSettings::default())
-        .first()
-    else {
-        picking.prev_hovered = picking.hovered;
-        picking.hovered = Entity::PLACEHOLDER;
-        return;
-    };
-    picking.prev_hovered = picking.hovered;
-    picking.hovered = *entity;
 }
 
 pub fn hover_entity(mut ray_cast: MeshRayCast, mut picking: ResMut<Picking>) {
