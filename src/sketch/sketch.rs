@@ -17,6 +17,10 @@ pub enum SketchMode {
     Arc,
 }
 
+#[derive(Component, Default)]
+#[component(storage = "SparseSet")]
+pub struct Moving;
+
 // pub const DEFAULT_RESOLUTION: u32 = 64;
 pub const DEFAULT_POS: Vec3 = Vec3::splat(f32::MIN);
 

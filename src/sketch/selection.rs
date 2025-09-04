@@ -19,10 +19,10 @@ pub fn toggle_select_entity(
     }
 
     if query.get(entity).is_ok() {
-        // Already selected
+        // deselect already selected
         commands.entity(entity).remove::<Selected>();
     } else {
-        // Not yet selected
+        // select not yet selected
         commands.entity(entity).insert(Selected);
     }
     commands.entity(entity).insert(ChangingMaterial);

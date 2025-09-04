@@ -108,7 +108,7 @@ pub fn finalize_dot(
         .insert(MESH_VISIBILITY);
 
     // setup_dot_observes(commands, ui_materials, dot_entity);
-    return dot_entity;
+    dot_entity
 }
 
 pub fn finalize_dots(

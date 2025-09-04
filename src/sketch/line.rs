@@ -8,8 +8,9 @@ use crate::assets::visibility::MESH_VISIBILITY;
 use crate::cursor::{Cursor, Picking};
 
 use super::dot::{Dot, finalize_dots, spawn_temporary_dot};
+use super::selection::Selected;
 use super::size::LINE_MESH_WIDTH;
-use super::sketch::{Checked, Current, SketchMode};
+use super::sketch::{Checked, Current, Moving, SketchMode};
 
 #[derive(Component, Debug, PartialEq)]
 pub struct Line {
@@ -106,6 +107,7 @@ pub fn handle_sketch_line(
 
     current.lines.clear();
     let line = spawn_line(&mut commands, start_dot, end_dot);
+    // setup_observers(line);
     current.lines.push(line);
     checked.lines.clear();
     checked.lines.push(prev_line);
@@ -156,7 +158,7 @@ pub fn swap_line_end(
         prev = line.end;
         line.end = next;
     }
-    return prev;
+    prev
 }
 
 pub fn finalize_line(
@@ -194,7 +196,7 @@ pub fn get_line_ending_positions(
         return transforms;
     };
     transforms = (*start, *end);
-    return transforms;
+    transforms
 }
 
 pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
