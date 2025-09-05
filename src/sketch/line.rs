@@ -6,11 +6,12 @@ use crate::assets::colors::*;
 use crate::assets::materials::{UIMaterialProvider, UIMaterials};
 use crate::assets::visibility::MESH_VISIBILITY;
 use crate::cursor::{Cursor, Picking};
+use crate::reload::{ReloadLevel, Reloadable};
+use crate::schedule::ScheduleSet;
 
 use super::dot::{Dot, finalize_dots, spawn_temporary_dot};
-use super::selection::Selected;
 use super::size::LINE_MESH_WIDTH;
-use super::sketch::{Checked, Current, Moving, SketchMode};
+use super::sketch::{Checked, Current, SketchMode};
 
 #[derive(Component, Debug, PartialEq)]
 pub struct Line {
@@ -52,11 +53,11 @@ impl Plugin for LinePlugin {
                         in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
                     ),
                     handle_move_current_line.run_if(in_state(SketchMode::Line)),
-                    update_line_transforms,
                     // display_dots,
                     display_lines,
                 )
-                    .chain(),
+                    .chain()
+                    .in_set(ScheduleSet::EntityUpdates),
             );
     }
 }
@@ -129,7 +130,14 @@ pub fn handle_move_current_line(
 }
 
 fn spawn_line(commands: &mut Commands, start: Entity, end: Entity) -> Entity {
-    commands.spawn(Line { start, end }).id()
+    commands
+        .spawn((
+            Line { start, end },
+            Reloadable {
+                level: ReloadLevel::Hard,
+            },
+        ))
+        .id()
 }
 
 fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform>) {
@@ -215,6 +223,8 @@ pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
     }
 }
 
+// pub fn move_lines() {}
+
 pub fn update_line_transforms(
     mut lines: Query<(&Line, &mut Transform)>,
     dots: Query<(&Dot, &Transform), Without<Line>>,
@@ -261,22 +271,23 @@ pub fn clear_redundant(
         return;
     }
     let checked_line = checked.lines[0];
-    let Ok((compare_to_entity, compare_to)) = lines.get(checked_line) else {
+    let Ok((compare_to_entity, compare_to_line)) = lines.get(checked_line) else {
         return;
     };
     for (line_entity, line) in lines.iter() {
         if compare_to_entity == line_entity {
             continue;
         }
-        if compare_to.start == compare_to.end {
+        if compare_to_line.start == compare_to_line.end {
             warn!("Clearing single-dot line: {:?}", checked_line);
             checked.lines.clear();
             commands.entity(checked_line).despawn();
             return;
         }
 
-        let same_line = line.start == compare_to.start && line.end == compare_to.end;
-        let same_line_reversed = line.start == compare_to.end && line.end == compare_to.start;
+        let same_line = line.start == compare_to_line.start && line.end == compare_to_line.end;
+        let same_line_reversed =
+            line.start == compare_to_line.end && line.end == compare_to_line.start;
         if same_line || same_line_reversed {
             warn!("Clearing redundant line: {:?}", checked_line);
             checked.lines.clear();

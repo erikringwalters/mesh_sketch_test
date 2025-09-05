@@ -1,5 +1,11 @@
+use bevy::input::common_conditions::input_pressed;
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
+use crate::cursor::is_cursor_moving;
+use crate::schedule::ScheduleSet;
+
+use super::dot::move_dots;
+use super::line::update_line_transforms;
 use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
@@ -17,9 +23,9 @@ pub enum SketchMode {
     Arc,
 }
 
-#[derive(Component, Default)]
-#[component(storage = "SparseSet")]
-pub struct Moving;
+// #[derive(Component, Default)]
+// #[component(storage = "SparseSet")]
+// pub struct Moving;
 
 // pub const DEFAULT_RESOLUTION: u32 = 64;
 pub const DEFAULT_POS: Vec3 = Vec3::splat(f32::MIN);
@@ -61,8 +67,11 @@ impl Plugin for SketchPlugin {
                 (
                     change_sketch_mode,
                     reset_current.run_if(input_just_pressed(MouseButton::Right)),
+                    move_dots.run_if(input_pressed(MouseButton::Left).and(is_cursor_moving)),
+                    update_line_transforms.run_if(is_cursor_moving),
                 )
-                    .chain(),
+                    .chain()
+                    .in_set(ScheduleSet::EntityUpdates),
             );
     }
 }

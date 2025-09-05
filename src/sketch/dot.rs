@@ -10,6 +10,7 @@ use crate::{
 };
 
 use super::{
+    selection::Selected,
     size::DOT_MESH_RADIUS,
     sketch::{Current, SketchMode},
 };
@@ -120,5 +121,15 @@ pub fn finalize_dots(
 ) {
     for dot in &current.dots {
         finalize_dot(&mut commands, &dot_mesh, &ui_materials, *dot, &mut dots);
+    }
+}
+
+pub fn move_dots(
+    cursor: Res<Cursor>,
+    mut query: Query<&mut Transform, (With<Dot>, With<Selected>)>,
+) {
+    let delta = cursor.position - cursor.prev_position;
+    for mut transform in query.iter_mut() {
+        transform.translation += delta;
     }
 }

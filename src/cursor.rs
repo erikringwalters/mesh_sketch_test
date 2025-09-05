@@ -1,10 +1,9 @@
-use bevy::input::common_conditions::{input_just_pressed, input_pressed};
-use bevy::input::mouse::AccumulatedMouseMotion;
+use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
 
 use crate::assets::materials::ChangingMaterial;
 use crate::schedule::ScheduleSet;
-use crate::sketch::selection::{Selected, deselect_other_entities, toggle_select_entity};
+use crate::sketch::selection::{deselect_other_entities, toggle_select_entity};
 use crate::sketch::sketch::SketchMode;
 
 #[derive(Resource, Default)]
@@ -49,15 +48,12 @@ impl Plugin for CursorPlugin {
                 )
                     .chain()
                     .in_set(ScheduleSet::UserInput),
-            )
-            .add_systems(
-                Update,
-                move_entities
-                    .run_if(input_pressed(MouseButton::Left))
-                    .chain()
-                    .in_set(ScheduleSet::EntityUpdates),
             );
     }
+}
+
+pub fn is_cursor_moving(cursor: Res<Cursor>) -> bool {
+    cursor.position - cursor.prev_position != Vec3::ZERO
 }
 
 fn update_cursor(
@@ -104,16 +100,6 @@ pub fn hover_entity(mut ray_cast: MeshRayCast, mut picking: ResMut<Picking>) {
     };
     picking.prev_hovered = picking.hovered;
     picking.hovered = *entity;
-}
-
-pub fn move_entities(cursor: Res<Cursor>, mut query: Query<&mut Transform, With<Selected>>) {
-    for mut transform in query.iter_mut() {
-        let delta = cursor.position - cursor.prev_position;
-
-        if delta != Vec3::ZERO {
-            transform.translation += delta;
-        }
-    }
 }
 
 pub fn insert_changing_material(mut commands: Commands, picking: ResMut<Picking>) {

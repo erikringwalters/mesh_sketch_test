@@ -55,7 +55,7 @@ fn handle_reload(
         } else {
             "Hard reloaded."
         };
-        println!("{:?}", message);
+        println!("{}", message);
     }
 }
 
