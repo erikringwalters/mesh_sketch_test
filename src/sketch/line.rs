@@ -10,8 +10,9 @@ use crate::reload::{ReloadLevel, Reloadable};
 use crate::schedule::ScheduleSet;
 
 use super::dot::{Dot, finalize_dots, spawn_temporary_dot};
+use super::selection::Selected;
 use super::size::LINE_MESH_WIDTH;
-use super::sketch::{Checked, Current, SketchMode};
+use super::sketch::{Checked, Current, Moving, SketchMode};
 
 #[derive(Component, Debug, PartialEq)]
 pub struct Line {
@@ -223,7 +224,21 @@ pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
     }
 }
 
-// pub fn move_lines() {}
+pub fn move_selected_lines(
+    cursor: Res<Cursor>,
+    lines: Query<&mut Line, With<Selected>>,
+    mut dots: Query<&mut Transform, (With<Dot>, Without<Line>, Without<Moving>)>,
+) {
+    let delta = cursor.position - cursor.prev_position;
+    for line in &lines {
+        if let Ok(mut start_transform) = dots.get_mut(line.start) {
+            start_transform.translation += delta;
+        }
+        if let Ok(mut end_transform) = dots.get_mut(line.end) {
+            end_transform.translation += delta;
+        }
+    }
+}
 
 pub fn update_line_transforms(
     mut lines: Query<(&Line, &mut Transform)>,

@@ -12,7 +12,7 @@ use crate::{
 use super::{
     selection::Selected,
     size::DOT_MESH_RADIUS,
-    sketch::{Current, SketchMode},
+    sketch::{Current, Moving, SketchMode},
 };
 
 #[derive(Debug, Default, PartialEq)]
@@ -124,12 +124,14 @@ pub fn finalize_dots(
     }
 }
 
-pub fn move_dots(
+pub fn move_selected_dots(
+    mut commands: Commands,
     cursor: Res<Cursor>,
-    mut query: Query<&mut Transform, (With<Dot>, With<Selected>)>,
+    mut query: Query<(Entity, &mut Transform), (With<Dot>, With<Selected>)>,
 ) {
     let delta = cursor.position - cursor.prev_position;
-    for mut transform in query.iter_mut() {
+    for (entity, mut transform) in query.iter_mut() {
+        commands.entity(entity).insert(Moving);
         transform.translation += delta;
     }
 }
