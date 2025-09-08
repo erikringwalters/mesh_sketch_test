@@ -102,7 +102,7 @@ pub fn hover_entity(mut ray_cast: MeshRayCast, mut picking: ResMut<Picking>) {
     picking.hovered = *entity;
 }
 
-pub fn insert_changing_material(mut commands: Commands, picking: ResMut<Picking>) {
+pub fn insert_changing_material(mut commands: Commands, picking: Res<Picking>) {
     if picking.hovered != picking.prev_hovered && picking.hovered != Entity::PLACEHOLDER {
         commands.entity(picking.hovered).insert(ChangingMaterial);
     }
@@ -111,4 +111,8 @@ pub fn insert_changing_material(mut commands: Commands, picking: ResMut<Picking>
             .entity(picking.prev_hovered)
             .insert(ChangingMaterial);
     }
+}
+
+pub fn reset_picking(mut picking: ResMut<Picking>) {
+    *picking = Picking::default();
 }

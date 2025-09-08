@@ -67,12 +67,16 @@ impl Plugin for SketchPlugin {
                 (
                     change_sketch_mode,
                     reset_current.run_if(input_just_pressed(MouseButton::Right)),
-                    mark_moving_dots.run_if(is_dragging()),
-                    mark_moving_lines.run_if(is_dragging()),
-                    update_moving_transforms.run_if(is_dragging()),
+                    (
+                        mark_moving_dots,
+                        mark_moving_lines,
+                        update_moving_transforms,
+                    )
+                        .run_if(is_dragging())
+                        .chain(),
                     update_line_mesh_transforms.run_if(is_cursor_moving),
-                    display_lines,
                     remove_moving.run_if(not(is_cursor_moving)),
+                    display_lines,
                 )
                     .chain()
                     .in_set(ScheduleSet::EntityUpdates),

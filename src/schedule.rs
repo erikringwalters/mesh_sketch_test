@@ -14,18 +14,12 @@ impl Plugin for SchedulePlugin {
         app.configure_sets(
             Update,
             (
-                ScheduleSet::DespawnEntities,
                 // Flush commands (i.e. 'apply_deferred' runs)
                 ScheduleSet::UserInput,
                 ScheduleSet::EntityUpdates,
+                ScheduleSet::DespawnEntities,
             )
                 .chain(),
-        )
-        .add_systems(
-            Update,
-            ApplyDeferred
-                .after(ScheduleSet::DespawnEntities)
-                .before(ScheduleSet::UserInput),
         );
     }
 }

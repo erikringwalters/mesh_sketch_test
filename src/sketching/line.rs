@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::assets::colors::*;
 use crate::assets::materials::{UIMaterialProvider, UIMaterials};
 use crate::assets::visibility::MESH_VISIBILITY;
-use crate::cursor::{Cursor, Picking};
+use crate::cursor::{Cursor, Picking, reset_picking};
 use crate::reload::{ReloadLevel, Reloadable};
 use crate::schedule::ScheduleSet;
 
@@ -61,7 +61,8 @@ impl Plugin for LinePlugin {
             .add_systems(
                 Update,
                 ((delete_selected_entities, delete_dependent_lines)
-                    .run_if(input_just_pressed(KeyCode::KeyX)),)
+                    .run_if(input_just_pressed(KeyCode::KeyX))
+                    .chain(),)
                     .chain()
                     .in_set(ScheduleSet::DespawnEntities),
             );
@@ -281,6 +282,7 @@ pub fn finalize_lines(
     }
 }
 
+// TODO: Investigate why material oscillates after clearing redundant line
 pub fn clear_redundant(
     mut commands: Commands,
     mut checked: ResMut<Checked>,
@@ -316,7 +318,12 @@ pub fn clear_redundant(
     }
 }
 
-pub fn delete_selected_entities(mut commands: Commands, query: Query<Entity, With<Selected>>) {
+pub fn delete_selected_entities(
+    mut commands: Commands,
+    picking: ResMut<Picking>,
+    query: Query<Entity, With<Selected>>,
+) {
+    reset_picking(picking);
     for entity in query.iter() {
         commands.entity(entity).despawn();
     }
