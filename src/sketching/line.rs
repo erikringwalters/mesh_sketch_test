@@ -14,6 +14,8 @@ use super::selection::Selected;
 use super::size::LINE_MESH_WIDTH;
 use super::sketch::{Checked, Current, Moving, SketchMode};
 
+type DotNotMoving = (With<Dot>, Without<Line>, Without<Moving>);
+
 #[derive(Component, Debug, PartialEq)]
 pub struct Line {
     pub start: Entity,
@@ -41,24 +43,28 @@ impl Plugin for LinePlugin {
             .add_systems(
                 Update,
                 (
-                    finalize_dots.run_if(
-                        in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
-                    ),
-                    finalize_lines.run_if(
-                        in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
-                    ),
-                    handle_sketch_line.run_if(
-                        in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
-                    ),
-                    clear_redundant.run_if(
-                        in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
-                    ),
+                    (
+                        finalize_dots,
+                        finalize_lines,
+                        handle_sketch_line,
+                        clear_redundant,
+                    )
+                        .run_if(
+                            in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
+                        ),
                     handle_move_current_line.run_if(in_state(SketchMode::Line)),
                     // display_dots,
                     display_lines,
                 )
                     .chain()
                     .in_set(ScheduleSet::EntityUpdates),
+            )
+            .add_systems(
+                Update,
+                ((delete_selected_entities, delete_dependent_lines)
+                    .run_if(input_just_pressed(KeyCode::KeyX)),)
+                    .chain()
+                    .in_set(ScheduleSet::DespawnEntities),
             );
     }
 }
@@ -224,23 +230,22 @@ pub fn get_line_mesh_transform(start: Transform, end: Transform) -> Transform {
     }
 }
 
-pub fn move_selected_lines(
-    cursor: Res<Cursor>,
+pub fn mark_moving_lines(
+    mut commands: Commands,
     lines: Query<&mut Line, With<Selected>>,
-    mut dots: Query<&mut Transform, (With<Dot>, Without<Line>, Without<Moving>)>,
+    mut dots: Query<Entity, DotNotMoving>,
 ) {
-    let delta = cursor.position - cursor.prev_position;
     for line in &lines {
-        if let Ok(mut start_transform) = dots.get_mut(line.start) {
-            start_transform.translation += delta;
+        if let Ok(start) = dots.get_mut(line.start) {
+            commands.entity(start).insert(Moving);
         }
-        if let Ok(mut end_transform) = dots.get_mut(line.end) {
-            end_transform.translation += delta;
+        if let Ok(end) = dots.get_mut(line.end) {
+            commands.entity(end).insert(Moving);
         }
     }
 }
 
-pub fn update_line_transforms(
+pub fn update_line_mesh_transforms(
     mut lines: Query<(&Line, &mut Transform)>,
     dots: Query<(&Dot, &Transform), Without<Line>>,
 ) {
@@ -308,6 +313,30 @@ pub fn clear_redundant(
             checked.lines.clear();
             commands.entity(checked_line).despawn();
             return;
+        }
+    }
+}
+
+pub fn delete_selected_entities(mut commands: Commands, query: Query<Entity, With<Selected>>) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn();
+    }
+}
+
+// Delete lines if their start or end have been deleted
+pub fn delete_dependent_lines(
+    mut commands: Commands,
+    lines: Query<(Entity, &Line)>,
+    mut dots: Query<&Dot>,
+) {
+    for (entity, line) in lines.iter() {
+        if dots.get_mut(line.start).is_ok() {
+        } else {
+            commands.entity(entity).despawn();
+        }
+        if dots.get_mut(line.end).is_ok() {
+        } else {
+            commands.entity(entity).despawn();
         }
     }
 }

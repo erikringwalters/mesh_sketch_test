@@ -3,8 +3,8 @@ use bevy::prelude::*;
 
 use crate::assets::materials::ChangingMaterial;
 use crate::schedule::ScheduleSet;
-use crate::sketch::selection::{deselect_other_entities, toggle_select_entity};
-use crate::sketch::sketch::SketchMode;
+use crate::sketching::selection::{deselect_other_entities, toggle_select_entity};
+use crate::sketching::sketch::SketchMode;
 
 #[derive(Resource, Default)]
 pub struct Cursor {

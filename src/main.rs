@@ -2,14 +2,14 @@ mod assets;
 mod cursor;
 mod reload;
 mod schedule;
-mod sketch;
+mod sketching;
 
 use self::schedule::SchedulePlugin;
 use assets::materials::MaterialsPlugin;
 use bevy::{prelude::*, render::camera::ScalingMode, window::PresentMode};
 use cursor::CursorPlugin;
 use reload::{ReloadPlugin, Reloadable};
-use sketch::sketch::SketchPlugin;
+use sketching::sketch::SketchPlugin;
 
 fn main() {
     App::new()

@@ -2,9 +2,9 @@ use bevy::prelude::*;
 
 use crate::cursor::Picking;
 use crate::schedule::ScheduleSet;
-use crate::sketch::dot::Dot;
-use crate::sketch::line::Line;
-use crate::sketch::selection::Selected;
+use crate::sketching::dot::Dot;
+use crate::sketching::line::Line;
+use crate::sketching::selection::Selected;
 
 use super::colors::*;
 

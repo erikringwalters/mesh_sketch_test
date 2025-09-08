@@ -15,6 +15,8 @@ use super::{
     sketch::{Current, Moving, SketchMode},
 };
 
+type DotSelectedButNotMoving = (With<Dot>, With<Selected>, Without<Moving>);
+
 #[derive(Debug, Default, PartialEq)]
 enum DotMode {
     #[default]
@@ -124,14 +126,8 @@ pub fn finalize_dots(
     }
 }
 
-pub fn move_selected_dots(
-    mut commands: Commands,
-    cursor: Res<Cursor>,
-    mut query: Query<(Entity, &mut Transform), (With<Dot>, With<Selected>)>,
-) {
-    let delta = cursor.position - cursor.prev_position;
-    for (entity, mut transform) in query.iter_mut() {
+pub fn mark_moving_dots(mut commands: Commands, mut query: Query<Entity, DotSelectedButNotMoving>) {
+    for entity in query.iter_mut() {
         commands.entity(entity).insert(Moving);
-        transform.translation += delta;
     }
 }

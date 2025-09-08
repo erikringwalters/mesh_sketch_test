@@ -1,11 +1,11 @@
 use bevy::input::common_conditions::input_pressed;
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::cursor::is_cursor_moving;
+use crate::cursor::{Cursor, is_cursor_moving};
 use crate::schedule::ScheduleSet;
 
-use super::dot::move_selected_dots;
-use super::line::{move_selected_lines, update_line_transforms};
+use super::dot::mark_moving_dots;
+use super::line::{mark_moving_lines, update_line_mesh_transforms};
 use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
@@ -67,11 +67,11 @@ impl Plugin for SketchPlugin {
                 (
                     change_sketch_mode,
                     reset_current.run_if(input_just_pressed(MouseButton::Right)),
-                    move_selected_dots
+                    mark_moving_dots.run_if(input_pressed(MouseButton::Left).and(is_cursor_moving)),
+                    mark_moving_lines
                         .run_if(input_pressed(MouseButton::Left).and(is_cursor_moving)),
-                    move_selected_lines
-                        .run_if(input_pressed(MouseButton::Left).and(is_cursor_moving)),
-                    update_line_transforms.run_if(is_cursor_moving),
+                    update_moving_transforms.run_if(is_cursor_moving),
+                    update_line_mesh_transforms.run_if(is_cursor_moving),
                     remove_moving.run_if(not(is_cursor_moving)),
                 )
                     .chain()
@@ -116,5 +116,15 @@ pub fn reset_current(mut commands: Commands, mut current: ResMut<Current>) {
 pub fn remove_moving(mut commands: Commands, query: Query<Entity, With<Moving>>) {
     for entity in query.iter() {
         commands.entity(entity).remove::<Moving>();
+    }
+}
+
+pub fn update_moving_transforms(
+    cursor: Res<Cursor>,
+    mut query: Query<&mut Transform, With<Moving>>,
+) {
+    let delta = cursor.position - cursor.prev_position;
+    for mut transform in query.iter_mut() {
+        transform.translation += delta;
     }
 }

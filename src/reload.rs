@@ -2,7 +2,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     setup,
-    sketch::sketch::{self, Current},
+    sketching::sketch::{self, Current},
 };
 
 #[derive(Default, Debug, Eq, PartialEq, PartialOrd, Ord)]
