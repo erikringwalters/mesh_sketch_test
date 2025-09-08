@@ -54,7 +54,6 @@ impl Plugin for LinePlugin {
                         ),
                     handle_move_current_line.run_if(in_state(SketchMode::Line)),
                     // display_dots,
-                    display_lines,
                 )
                     .chain()
                     .in_set(ScheduleSet::EntityUpdates),
@@ -147,7 +146,7 @@ fn spawn_line(commands: &mut Commands, start: Entity, end: Entity) -> Entity {
         .id()
 }
 
-fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform>) {
+pub fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform>) {
     for line in lines.iter() {
         let Ok(start_position) = dots.get(line.start) else {
             continue;

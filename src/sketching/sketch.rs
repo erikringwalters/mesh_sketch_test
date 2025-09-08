@@ -5,7 +5,7 @@ use crate::cursor::{Cursor, is_cursor_moving};
 use crate::schedule::ScheduleSet;
 
 use super::dot::mark_moving_dots;
-use super::line::{mark_moving_lines, update_line_mesh_transforms};
+use super::line::{display_lines, mark_moving_lines, update_line_mesh_transforms};
 use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
@@ -67,11 +67,11 @@ impl Plugin for SketchPlugin {
                 (
                     change_sketch_mode,
                     reset_current.run_if(input_just_pressed(MouseButton::Right)),
-                    mark_moving_dots.run_if(input_pressed(MouseButton::Left).and(is_cursor_moving)),
-                    mark_moving_lines
-                        .run_if(input_pressed(MouseButton::Left).and(is_cursor_moving)),
-                    update_moving_transforms.run_if(is_cursor_moving),
+                    mark_moving_dots.run_if(is_dragging()),
+                    mark_moving_lines.run_if(is_dragging()),
+                    update_moving_transforms.run_if(is_dragging()),
                     update_line_mesh_transforms.run_if(is_cursor_moving),
+                    display_lines,
                     remove_moving.run_if(not(is_cursor_moving)),
                 )
                     .chain()
@@ -127,4 +127,8 @@ pub fn update_moving_transforms(
     for mut transform in query.iter_mut() {
         transform.translation += delta;
     }
+}
+
+pub fn is_dragging() -> impl Condition<()> {
+    input_pressed(MouseButton::Left).and(is_cursor_moving)
 }
