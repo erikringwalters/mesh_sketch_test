@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::assets::materials::ChangingMaterial;
 use crate::schedule::ScheduleSet;
-use crate::sketching::selection::{deselect_other_entities, toggle_select_entity};
+use crate::sketching::selection::{deselect_other_entities, select_entity};
 use crate::sketching::sketch::SketchMode;
 
 #[derive(Resource, Default)]
@@ -40,8 +40,8 @@ impl Plugin for CursorPlugin {
                 (
                     update_cursor,
                     hover_entity,
-                    insert_changing_material,
-                    toggle_select_entity.run_if(
+                    mark_hovered_changing_material,
+                    select_entity.run_if(
                         in_state(SketchMode::None).and(input_just_pressed(MouseButton::Left)),
                     ),
                     deselect_other_entities.run_if(input_just_pressed(MouseButton::Left)),
@@ -102,7 +102,7 @@ pub fn hover_entity(mut ray_cast: MeshRayCast, mut picking: ResMut<Picking>) {
     picking.hovered = *entity;
 }
 
-pub fn insert_changing_material(mut commands: Commands, picking: Res<Picking>) {
+pub fn mark_hovered_changing_material(mut commands: Commands, picking: Res<Picking>) {
     if picking.hovered != picking.prev_hovered && picking.hovered != Entity::PLACEHOLDER {
         commands.entity(picking.hovered).insert(ChangingMaterial);
     }

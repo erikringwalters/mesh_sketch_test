@@ -17,7 +17,7 @@ pub struct UIMaterials {
     pub line: Handle<StandardMaterial>,
     pub hover: Handle<StandardMaterial>,
     pub selected: Handle<StandardMaterial>,
-    pub selected_and_hovered: Handle<StandardMaterial>,
+    pub focused: Handle<StandardMaterial>,
 }
 
 #[derive(Component, Default)]
@@ -43,6 +43,7 @@ impl Plugin for MaterialsPlugin {
             .add_systems(
                 Update,
                 (
+                    // TODO: Lock colors if cursor is dragging entities
                     update_to_selected_material,
                     update_to_hover_material::<Dot>,
                     update_to_hover_material::<Line>,
@@ -61,7 +62,7 @@ pub fn setup_ui_materials(mut commands: Commands, mut materials: ResMut<Assets<S
         line: materials.add(ui_material(color_from_hex(LINE))),
         hover: materials.add(ui_material(color_from_hex(HOVER))),
         selected: materials.add(ui_material(color_from_hex(LEAF_GREEN))),
-        selected_and_hovered: materials.add(ui_material(color_from_hex(DARK_SEAFOAM))),
+        focused: materials.add(ui_material(color_from_hex(DARK_SEAFOAM))),
     });
 }
 
@@ -83,7 +84,7 @@ pub fn update_to_default_material<T: Component + UIMaterialProvider>(
 ) {
     for (entity, mut material) in material_query.iter_mut() {
         let mat = get_ui_material::<T>(&ui_materials);
-        println!("Changing {:?} to default material", entity);
+        // println!("Changing {:?} to default material", entity);
         material.0 = mat;
         commands.entity(entity).remove::<ChangingMaterial>();
     }
@@ -96,7 +97,7 @@ pub fn update_to_hover_material<T: Component>(
     mut material_query: Query<&mut MeshMaterial3d<StandardMaterial>, ChangingButNotSelected<T>>,
 ) {
     if let Ok(mut material) = material_query.get_mut(picking.hovered) {
-        println!("Changing {:?} to hover material", picking.hovered);
+        // println!("Changing {:?} to hover material", picking.hovered);
         material.0 = ui_materials.hover.clone();
         commands
             .entity(picking.hovered)
@@ -112,10 +113,10 @@ pub fn update_to_selected_material(
 ) {
     for (entity, mut material) in query.iter_mut() {
         if entity == picking.hovered {
-            println!("Changing {:?} to selected-and-hovered material", entity);
-            material.0 = ui_materials.selected_and_hovered.clone();
+            // println!("Changing {:?} to selected-and-hovered material", entity);
+            material.0 = ui_materials.focused.clone();
         } else {
-            println!("Changing {:?} to selected material", entity);
+            // println!("Changing {:?} to selected material", entity);
             material.0 = ui_materials.selected.clone();
         }
         commands.entity(entity).remove::<ChangingMaterial>();

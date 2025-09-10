@@ -7,24 +7,14 @@ use crate::cursor::Picking;
 #[component(storage = "SparseSet")]
 pub struct Selected;
 
-pub fn toggle_select_entity(
-    mut commands: Commands,
-    picking: Res<Picking>,
-    query: Query<&Selected>,
-) {
+pub fn select_entity(mut commands: Commands, picking: Res<Picking>) {
     let entity = picking.hovered;
 
     if entity == Entity::PLACEHOLDER {
         return;
     }
 
-    if query.get(entity).is_ok() {
-        // deselect already selected
-        commands.entity(entity).remove::<Selected>();
-    } else {
-        // select not yet selected
-        commands.entity(entity).insert(Selected);
-    }
+    commands.entity(entity).insert(Selected);
     commands.entity(entity).insert(ChangingMaterial);
 }
 

@@ -54,7 +54,6 @@ impl Plugin for LinePlugin {
                         )
                         .chain(),
                     handle_move_current_line.run_if(in_state(SketchMode::Line)),
-                    // display_dots,
                 )
                     .chain()
                     .in_set(ScheduleSet::EntityUpdates),
