@@ -51,7 +51,8 @@ impl Plugin for LinePlugin {
                     )
                         .run_if(
                             in_state(SketchMode::Line).and(input_just_pressed(MouseButton::Left)),
-                        ),
+                        )
+                        .chain(),
                     handle_move_current_line.run_if(in_state(SketchMode::Line)),
                     // display_dots,
                 )
@@ -115,10 +116,45 @@ pub fn handle_sketch_line(
 
     current.lines.clear();
     let line = spawn_line(&mut commands, start_dot, end_dot);
-    // setup_observers(line);
     current.lines.push(line);
     checked.lines.clear();
     checked.lines.push(prev_line);
+}
+
+pub fn clear_redundant(
+    mut commands: Commands,
+    mut checked: ResMut<Checked>,
+    lines: Query<(Entity, &mut Line)>,
+) {
+    if checked.lines.is_empty() || checked.lines[0] == Entity::PLACEHOLDER {
+        return;
+    }
+    let checked_line = checked.lines[0];
+    let Ok((compare_to_entity, compare_to_line)) = lines.get(checked_line) else {
+        return;
+    };
+    for (line_entity, line) in lines.iter() {
+        if compare_to_entity == line_entity {
+            continue;
+        }
+        if compare_to_line.start == compare_to_line.end {
+            warn!("Clearing single-dot line: {:?}", checked_line);
+            checked.lines.clear();
+            commands.entity(checked_line).despawn();
+            return;
+        }
+
+        let is_same_line_ends =
+            line.start == compare_to_line.start && line.end == compare_to_line.end;
+        let is_same_line_ends_reversed =
+            line.start == compare_to_line.end && line.end == compare_to_line.start;
+        if is_same_line_ends || is_same_line_ends_reversed {
+            warn!("Clearing redundant line: {:?}", checked_line);
+            checked.lines.clear();
+            commands.entity(checked_line).despawn();
+            return;
+        }
+    }
 }
 
 pub fn handle_move_current_line(
@@ -195,6 +231,26 @@ pub fn finalize_line(
     ));
 }
 
+pub fn finalize_lines(
+    mut commands: Commands,
+    current: ResMut<Current>,
+    line_mesh: Res<LineMeshHandle>,
+    ui_materials: Res<UIMaterials>,
+    mut lines: Query<&mut Line>,
+    mut dots: Query<&Transform>,
+) {
+    for line in &current.lines {
+        finalize_line(
+            &mut commands,
+            &line_mesh,
+            &ui_materials,
+            *line,
+            &mut lines,
+            &mut dots,
+        );
+    }
+}
+
 pub fn get_line_ending_positions(
     line_entity: Entity,
     lines: &mut Query<&mut Line>,
@@ -259,62 +315,6 @@ pub fn update_line_mesh_transforms(
 
         let mesh_transform = get_line_mesh_transform(*start.1, *end.1);
         *transform = mesh_transform;
-    }
-}
-
-pub fn finalize_lines(
-    mut commands: Commands,
-    current: ResMut<Current>,
-    line_mesh: Res<LineMeshHandle>,
-    ui_materials: Res<UIMaterials>,
-    mut lines: Query<&mut Line>,
-    mut dots: Query<&Transform>,
-) {
-    for line in &current.lines {
-        finalize_line(
-            &mut commands,
-            &line_mesh,
-            &ui_materials,
-            *line,
-            &mut lines,
-            &mut dots,
-        );
-    }
-}
-
-// TODO: Investigate why material oscillates after clearing redundant line
-pub fn clear_redundant(
-    mut commands: Commands,
-    mut checked: ResMut<Checked>,
-    lines: Query<(Entity, &mut Line)>,
-) {
-    if checked.lines.is_empty() || checked.lines[0] == Entity::PLACEHOLDER {
-        return;
-    }
-    let checked_line = checked.lines[0];
-    let Ok((compare_to_entity, compare_to_line)) = lines.get(checked_line) else {
-        return;
-    };
-    for (line_entity, line) in lines.iter() {
-        if compare_to_entity == line_entity {
-            continue;
-        }
-        if compare_to_line.start == compare_to_line.end {
-            warn!("Clearing single-dot line: {:?}", checked_line);
-            checked.lines.clear();
-            commands.entity(checked_line).despawn();
-            return;
-        }
-
-        let same_line = line.start == compare_to_line.start && line.end == compare_to_line.end;
-        let same_line_reversed =
-            line.start == compare_to_line.end && line.end == compare_to_line.start;
-        if same_line || same_line_reversed {
-            warn!("Clearing redundant line: {:?}", checked_line);
-            checked.lines.clear();
-            commands.entity(checked_line).despawn();
-            return;
-        }
     }
 }
 

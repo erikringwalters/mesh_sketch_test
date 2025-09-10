@@ -83,6 +83,7 @@ pub fn update_to_default_material<T: Component + UIMaterialProvider>(
 ) {
     for (entity, mut material) in material_query.iter_mut() {
         let mat = get_ui_material::<T>(&ui_materials);
+        println!("Changing {:?} to default material", entity);
         material.0 = mat;
         commands.entity(entity).remove::<ChangingMaterial>();
     }
@@ -95,6 +96,7 @@ pub fn update_to_hover_material<T: Component>(
     mut material_query: Query<&mut MeshMaterial3d<StandardMaterial>, ChangingButNotSelected<T>>,
 ) {
     if let Ok(mut material) = material_query.get_mut(picking.hovered) {
+        println!("Changing {:?} to hover material", picking.hovered);
         material.0 = ui_materials.hover.clone();
         commands
             .entity(picking.hovered)
@@ -110,8 +112,10 @@ pub fn update_to_selected_material(
 ) {
     for (entity, mut material) in query.iter_mut() {
         if entity == picking.hovered {
+            println!("Changing {:?} to selected-and-hovered material", entity);
             material.0 = ui_materials.selected_and_hovered.clone();
         } else {
+            println!("Changing {:?} to selected material", entity);
             material.0 = ui_materials.selected.clone();
         }
         commands.entity(entity).remove::<ChangingMaterial>();
