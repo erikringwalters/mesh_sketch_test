@@ -5,6 +5,7 @@ use crate::schedule::ScheduleSet;
 use crate::sketching::dot::Dot;
 use crate::sketching::line::Line;
 use crate::sketching::selection::Selected;
+use crate::sketching::sketch::is_dragging;
 
 use super::colors::*;
 
@@ -43,13 +44,13 @@ impl Plugin for MaterialsPlugin {
             .add_systems(
                 Update,
                 (
-                    // TODO: Lock colors if cursor is dragging entities
                     update_to_selected_material,
                     update_to_hover_material::<Dot>,
                     update_to_hover_material::<Line>,
                     update_to_default_material::<Dot>,
                     update_to_default_material::<Line>,
                 )
+                    .run_if(not(is_dragging()))
                     .chain()
                     .in_set(ScheduleSet::EntityUpdates),
             );
