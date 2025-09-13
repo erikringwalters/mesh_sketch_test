@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use crate::assets::colors::*;
 use crate::assets::materials::{UIMaterialProvider, UIMaterials};
 use crate::assets::visibility::MESH_VISIBILITY;
+use crate::constraints::constraint::Constraint;
 use crate::cursor::{Cursor, Picking, reset_picking};
 use crate::reload::{ReloadLevel, Reloadable};
 use crate::schedule::ScheduleSet;
@@ -343,5 +344,19 @@ pub fn delete_dependent_lines(
         } else {
             commands.entity(entity).despawn();
         }
+    }
+}
+
+pub fn insert_vertical_constraint(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Line), With<Selected>>,
+) {
+    for (entity, mut line) in query.iter_mut() {
+        commands.entity(entity).insert(Constraint {
+            horizontal: false,
+            vertical: true,
+        });
+        // TODO: Start and end are vertical
+        // line.start.
     }
 }
