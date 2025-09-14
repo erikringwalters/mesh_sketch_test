@@ -55,10 +55,15 @@ impl Plugin for LinePlugin {
                         )
                         .chain(),
                     handle_move_current_line.run_if(in_state(SketchMode::Line)),
-                    ((insert_vertical_constraint, update_line_mesh_transforms)
-                        .run_if(input_just_pressed(KeyCode::KeyV))
-                        .chain())
-                    .chain(),
+                    (
+                        (insert_horizontal_constraint, update_line_mesh_transforms)
+                            .run_if(input_just_pressed(KeyCode::KeyH))
+                            .chain(),
+                        (insert_vertical_constraint, update_line_mesh_transforms)
+                            .run_if(input_just_pressed(KeyCode::KeyV))
+                            .chain(),
+                    )
+                        .chain(),
                 )
                     .in_set(ScheduleSet::EntityUpdates),
             )
@@ -346,6 +351,29 @@ pub fn delete_dependent_lines(
         } else {
             commands.entity(entity).despawn();
         }
+    }
+}
+
+pub fn insert_horizontal_constraint(
+    mut commands: Commands,
+    mut lines: Query<(Entity, &mut Line, &Transform), With<Selected>>,
+    mut dots: Query<(Entity, &mut Transform), Without<Line>>,
+) {
+    for (entity, line, line_transform) in lines.iter_mut() {
+        commands.entity(entity).insert(Constraint {
+            horizontal: true,
+            vertical: false,
+        });
+        if let Ok(mut start) = dots.get_mut(line.start) {
+            start.1.translation.y = line_transform.translation.y;
+        } else {
+            continue;
+        };
+        if let Ok(mut end) = dots.get_mut(line.end) {
+            end.1.translation.y = line_transform.translation.y;
+        } else {
+            continue;
+        };
     }
 }
 
