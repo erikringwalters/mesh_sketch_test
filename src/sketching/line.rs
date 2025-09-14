@@ -389,13 +389,9 @@ pub fn insert_vertical_constraint(
         });
         if let Ok(mut start) = dots.get_mut(line.start) {
             start.1.translation.x = line_transform.translation.x;
-        } else {
-            continue;
-        };
+        }
         if let Ok(mut end) = dots.get_mut(line.end) {
             end.1.translation.x = line_transform.translation.x;
-        } else {
-            continue;
-        };
+        }
     }
 }
