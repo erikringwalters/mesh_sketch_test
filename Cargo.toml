@@ -18,3 +18,7 @@ inherits = "dev"
 
 [profile.android-dev]
 inherits = "dev"
+
+[profile.web-release]
+inherits = "release"
+opt-level = "z"
