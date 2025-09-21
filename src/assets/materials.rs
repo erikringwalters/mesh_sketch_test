@@ -71,6 +71,7 @@ pub fn ui_material(color: Color) -> StandardMaterial {
     StandardMaterial {
         base_color: color,
         unlit: true,
+        alpha_mode: AlphaMode::Blend,
         ..default()
     }
 }

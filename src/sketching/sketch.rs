@@ -5,7 +5,9 @@ use crate::cursor::{Cursor, is_cursor_moving};
 use crate::schedule::ScheduleSet;
 
 use super::dot::mark_moving_dots;
-use super::line::{display_lines, mark_moving_lines, update_line_mesh_transforms};
+use super::line::{
+    display_current_line_gizmo, display_line_gizmos, mark_moving_lines, update_line_mesh_transforms,
+};
 use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
@@ -76,7 +78,8 @@ impl Plugin for SketchPlugin {
                         .chain(),
                     update_line_mesh_transforms.run_if(is_cursor_moving),
                     remove_moving.run_if(not(is_cursor_moving)),
-                    display_lines,
+                    display_current_line_gizmo,
+                    display_line_gizmos,
                 )
                     .chain()
                     .in_set(ScheduleSet::EntityUpdates),

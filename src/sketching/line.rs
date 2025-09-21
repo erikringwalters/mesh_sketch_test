@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::assets::colors::*;
 use crate::assets::materials::{UIMaterialProvider, UIMaterials};
 use crate::assets::visibility::MESH_VISIBILITY;
-use crate::constraints::constraint::Constraint;
+use crate::constraints::constraint::*;
 use crate::cursor::{Cursor, Picking, reset_picking};
 use crate::reload::{ReloadLevel, Reloadable};
 use crate::schedule::ScheduleSet;
@@ -190,7 +190,31 @@ fn spawn_line(commands: &mut Commands, start: Entity, end: Entity) -> Entity {
         .id()
 }
 
-pub fn display_lines(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform>) {
+pub fn display_current_line_gizmo(
+    current: Res<Current>,
+    mut gizmos: Gizmos,
+    lines: Query<&Line>,
+    dots: Query<&Transform>,
+) {
+    if current.lines.is_empty() {
+        return;
+    }
+    if let Ok(line) = lines.get(current.lines[0]) {
+        let Ok(start_position) = dots.get(line.start) else {
+            return;
+        };
+        let Ok(end_position) = dots.get(line.end) else {
+            return;
+        };
+        gizmos.line(
+            start_position.translation,
+            end_position.translation,
+            color_from_hex(LINE),
+        );
+    };
+}
+
+pub fn display_line_gizmos(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform>) {
     for line in lines.iter() {
         let Ok(start_position) = dots.get(line.start) else {
             continue;
@@ -360,10 +384,7 @@ pub fn insert_horizontal_constraint(
     mut dots: Query<(Entity, &mut Transform), Without<Line>>,
 ) {
     for (entity, line, line_transform) in lines.iter_mut() {
-        commands.entity(entity).insert(Constraint {
-            horizontal: true,
-            vertical: false,
-        });
+        commands.entity(entity).insert(Horizontal);
         if let Ok(mut start) = dots.get_mut(line.start) {
             start.1.translation.y = line_transform.translation.y;
         } else {
@@ -383,10 +404,7 @@ pub fn insert_vertical_constraint(
     mut dots: Query<(Entity, &mut Transform), Without<Line>>,
 ) {
     for (entity, line, line_transform) in lines.iter_mut() {
-        commands.entity(entity).insert(Constraint {
-            horizontal: false,
-            vertical: true,
-        });
+        commands.entity(entity).insert(Vertical);
         if let Ok(mut start) = dots.get_mut(line.start) {
             start.1.translation.x = line_transform.translation.x;
         }
