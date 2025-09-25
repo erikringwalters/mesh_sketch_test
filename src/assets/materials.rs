@@ -4,8 +4,8 @@ use crate::cursor::Picking;
 use crate::schedule::ScheduleSet;
 use crate::sketching::dot::Dot;
 use crate::sketching::line::Line;
+use crate::sketching::movement::is_dragging;
 use crate::sketching::selection::Selected;
-use crate::sketching::sketch::is_dragging;
 
 use super::colors::*;
 

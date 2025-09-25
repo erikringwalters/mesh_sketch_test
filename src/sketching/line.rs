@@ -11,9 +11,10 @@ use crate::reload::{ReloadLevel, Reloadable};
 use crate::schedule::ScheduleSet;
 
 use super::dot::{Dot, finalize_dots, spawn_temporary_dot};
+use super::movement::Moving;
 use super::selection::Selected;
 use super::size::LINE_MESH_WIDTH;
-use super::sketch::{Checked, Current, Moving, SketchMode};
+use super::sketch::{Checked, Current, SketchMode};
 
 type DotNotMoving = (With<Dot>, Without<Line>, Without<Moving>);
 
@@ -190,6 +191,20 @@ fn spawn_line(commands: &mut Commands, start: Entity, end: Entity) -> Entity {
         .id()
 }
 
+pub fn display_line_gizmo(gizmos: &mut Gizmos, line: &Line, dots: Query<&Transform>) {
+    let Ok(start_position) = dots.get(line.start) else {
+        return;
+    };
+    let Ok(end_position) = dots.get(line.end) else {
+        return;
+    };
+    gizmos.line(
+        start_position.translation,
+        end_position.translation,
+        color_from_hex(LINE),
+    );
+}
+
 pub fn display_current_line_gizmo(
     current: Res<Current>,
     mut gizmos: Gizmos,
@@ -200,33 +215,13 @@ pub fn display_current_line_gizmo(
         return;
     }
     if let Ok(line) = lines.get(current.lines[0]) {
-        let Ok(start_position) = dots.get(line.start) else {
-            return;
-        };
-        let Ok(end_position) = dots.get(line.end) else {
-            return;
-        };
-        gizmos.line(
-            start_position.translation,
-            end_position.translation,
-            color_from_hex(LINE),
-        );
+        display_line_gizmo(&mut gizmos, line, dots);
     };
 }
 
-pub fn display_line_gizmos(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform>) {
+pub fn display_all_line_gizmos(mut gizmos: Gizmos, lines: Query<&Line>, dots: Query<&Transform>) {
     for line in lines.iter() {
-        let Ok(start_position) = dots.get(line.start) else {
-            continue;
-        };
-        let Ok(end_position) = dots.get(line.end) else {
-            continue;
-        };
-        gizmos.line(
-            start_position.translation,
-            end_position.translation,
-            color_from_hex(LINE),
-        );
+        display_line_gizmo(&mut gizmos, line, dots);
     }
 }
 
@@ -379,6 +374,7 @@ pub fn delete_dependent_lines(
 }
 
 pub fn insert_horizontal_constraint(
+    // TODO: Figure out how to apply this to constrain movement
     mut commands: Commands,
     mut lines: Query<(Entity, &mut Line, &Transform), With<Selected>>,
     mut dots: Query<(Entity, &mut Transform), Without<Line>>,

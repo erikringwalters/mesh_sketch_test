@@ -1,13 +1,14 @@
-use bevy::input::common_conditions::input_pressed;
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::cursor::{Cursor, is_cursor_moving};
+use crate::cursor::is_cursor_moving;
 use crate::schedule::ScheduleSet;
 
 use super::dot::mark_moving_dots;
 use super::line::{
-    display_current_line_gizmo, display_line_gizmos, mark_moving_lines, update_line_mesh_transforms,
+    display_all_line_gizmos, display_current_line_gizmo, mark_moving_lines,
+    update_line_mesh_transforms,
 };
+use super::movement::{is_dragging, move_horizontally, move_vertically, remove_moving};
 use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
@@ -24,10 +25,6 @@ pub enum SketchMode {
     Circle,
     Arc,
 }
-
-#[derive(Component, Default)]
-#[component(storage = "SparseSet")]
-pub struct Moving;
 
 // pub const DEFAULT_RESOLUTION: u32 = 64;
 pub const DEFAULT_POS: Vec3 = Vec3::splat(f32::MIN);
@@ -72,14 +69,16 @@ impl Plugin for SketchPlugin {
                     (
                         mark_moving_dots,
                         mark_moving_lines,
-                        update_moving_transforms,
+                        // update_moving_transforms,
+                        move_horizontally,
+                        move_vertically,
                     )
                         .run_if(is_dragging())
                         .chain(),
                     update_line_mesh_transforms.run_if(is_cursor_moving),
                     remove_moving.run_if(not(is_cursor_moving)),
                     display_current_line_gizmo,
-                    display_line_gizmos,
+                    display_all_line_gizmos,
                 )
                     .chain()
                     .in_set(ScheduleSet::EntityUpdates),
@@ -118,24 +117,4 @@ pub fn reset_current(mut commands: Commands, mut current: ResMut<Current>) {
         commands.entity(*entity).despawn();
     }
     *current = Current::default();
-}
-
-pub fn remove_moving(mut commands: Commands, query: Query<Entity, With<Moving>>) {
-    for entity in query.iter() {
-        commands.entity(entity).remove::<Moving>();
-    }
-}
-
-pub fn update_moving_transforms(
-    cursor: Res<Cursor>,
-    mut query: Query<&mut Transform, With<Moving>>,
-) {
-    let delta = cursor.position - cursor.prev_position;
-    for mut transform in query.iter_mut() {
-        transform.translation += delta;
-    }
-}
-
-pub fn is_dragging() -> impl Condition<()> {
-    input_pressed(MouseButton::Left).and(is_cursor_moving)
 }

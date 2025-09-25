@@ -10,9 +10,10 @@ use crate::{
 };
 
 use super::{
+    movement::Moving,
     selection::Selected,
     size::DOT_MESH_RADIUS,
-    sketch::{Current, Moving, SketchMode},
+    sketch::{Current, SketchMode},
 };
 
 type DotSelectedButNotMoving = (With<Dot>, With<Selected>, Without<Moving>);
