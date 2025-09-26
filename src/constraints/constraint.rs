@@ -7,7 +7,11 @@ use bevy::prelude::*;
 // }
 
 #[derive(Component, Debug)]
-pub struct Horizontal;
+pub struct Horizontal {
+    pub constrained_by: Entity,
+}
 
 #[derive(Component, Debug)]
-pub struct Vertical;
+pub struct Vertical {
+    pub constrained_by: Entity,
+}

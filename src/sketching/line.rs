@@ -380,14 +380,22 @@ pub fn insert_horizontal_constraint(
     mut dots: Query<(Entity, &mut Transform), Without<Line>>,
 ) {
     for (entity, line, line_transform) in lines.iter_mut() {
-        commands.entity(entity).insert(Horizontal);
-        if let Ok(mut start) = dots.get_mut(line.start) {
-            start.1.translation.y = line_transform.translation.y;
+        commands.entity(entity).insert(Horizontal {
+            constrained_by: entity,
+        });
+        if let Ok((start_entity, mut start_tf)) = dots.get_mut(line.start) {
+            commands.entity(start_entity).insert(Horizontal {
+                constrained_by: entity,
+            });
+            start_tf.translation.y = line_transform.translation.y;
         } else {
             continue;
         };
-        if let Ok(mut end) = dots.get_mut(line.end) {
-            end.1.translation.y = line_transform.translation.y;
+        if let Ok((end_entity, mut end_tf)) = dots.get_mut(line.end) {
+            commands.entity(end_entity).insert(Horizontal {
+                constrained_by: entity,
+            });
+            end_tf.translation.y = line_transform.translation.y;
         } else {
             continue;
         };
@@ -400,12 +408,24 @@ pub fn insert_vertical_constraint(
     mut dots: Query<(Entity, &mut Transform), Without<Line>>,
 ) {
     for (entity, line, line_transform) in lines.iter_mut() {
-        commands.entity(entity).insert(Vertical);
-        if let Ok(mut start) = dots.get_mut(line.start) {
-            start.1.translation.x = line_transform.translation.x;
-        }
-        if let Ok(mut end) = dots.get_mut(line.end) {
-            end.1.translation.x = line_transform.translation.x;
-        }
+        commands.entity(entity).insert(Vertical {
+            constrained_by: entity,
+        });
+        if let Ok((start_entity, mut start_tf)) = dots.get_mut(line.start) {
+            commands.entity(start_entity).insert(Vertical {
+                constrained_by: entity,
+            });
+            start_tf.translation.x = line_transform.translation.x;
+        } else {
+            continue;
+        };
+        if let Ok((end_entity, mut end_tf)) = dots.get_mut(line.end) {
+            commands.entity(end_entity).insert(Vertical {
+                constrained_by: entity,
+            });
+            end_tf.translation.x = line_transform.translation.x;
+        } else {
+            continue;
+        };
     }
 }
