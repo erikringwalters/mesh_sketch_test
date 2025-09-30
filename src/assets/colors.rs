@@ -26,7 +26,7 @@ pub fn color_from_hex(hex: &str) -> Color {
     let r = &hex[1..3];
     let g = &hex[3..5];
     let b = &hex[5..7];
-    let a = if hex.len() > 7 { &hex[7..9] } else { "44" };
+    let a = if hex.len() > 7 { &hex[7..9] } else { "FF" };
 
     let mut c: [u8; 4] = [0xFF; 4];
     let w = [r, g, b, a];

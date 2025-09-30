@@ -1,3 +1,3 @@
-use bevy::render::view::Visibility;
+use bevy::prelude::*;
 
 pub const MESH_VISIBILITY: Visibility = Visibility::Visible;

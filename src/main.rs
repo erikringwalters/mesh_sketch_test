@@ -7,7 +7,7 @@ mod sketching;
 
 use self::schedule::SchedulePlugin;
 use assets::materials::MaterialsPlugin;
-use bevy::{prelude::*, render::camera::ScalingMode, window::PresentMode};
+use bevy::{camera::ScalingMode, prelude::*, window::PresentMode};
 use cursor::CursorPlugin;
 use reload::{ReloadPlugin, Reloadable};
 use sketching::sketch::SketchPlugin;

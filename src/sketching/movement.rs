@@ -43,6 +43,6 @@ pub fn move_vertically(
     }
 }
 
-pub fn is_dragging() -> impl Condition<()> {
+pub fn is_dragging() -> impl SystemCondition<()> {
     input_pressed(MouseButton::Left).and(is_cursor_moving)
 }

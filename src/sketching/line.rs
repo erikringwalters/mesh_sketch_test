@@ -374,7 +374,6 @@ pub fn delete_dependent_lines(
 }
 
 pub fn insert_horizontal_constraint(
-    // TODO: Figure out how to apply this to constrain movement
     mut commands: Commands,
     mut lines: Query<(Entity, &mut Line, &Transform), With<Selected>>,
     mut dots: Query<(Entity, &mut Transform), Without<Line>>,
