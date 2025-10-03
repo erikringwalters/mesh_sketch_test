@@ -3,6 +3,9 @@ use bevy::prelude::*;
 
 use crate::constraints::constraint::{Horizontal, Vertical};
 use crate::cursor::{Cursor, is_cursor_moving};
+
+use super::dot::Dot;
+use super::line::{Line, get_line_mesh_transform};
 #[derive(Component, Default)]
 #[component(storage = "SparseSet")]
 pub struct Moving;
@@ -23,6 +26,20 @@ pub fn update_moving_transforms(
     }
 }
 
+pub fn enforce_horizontal_constraint(
+    mut lines: Query<&Line, With<Horizontal>>,
+    mut dots: Query<&mut Transform, With<Dot>>,
+) {
+    for line in lines.iter_mut() {
+        if let Ok([mut start_tf, mut end_tf]) = dots.get_many_mut([line.start, line.end]) {
+            let avg_y = (start_tf.translation.y + end_tf.translation.y) / 2.0;
+            start_tf.translation.y = avg_y;
+            end_tf.translation.y = avg_y;
+        } else {
+            continue;
+        };
+    }
+}
 pub fn move_horizontally(
     cursor: Res<Cursor>,
     mut query: Query<&mut Transform, (With<Moving>, Without<Vertical>)>,

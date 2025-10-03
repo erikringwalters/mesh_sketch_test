@@ -8,10 +8,10 @@ use bevy::prelude::*;
 
 #[derive(Component, Debug)]
 pub struct Horizontal {
-    pub constrained_by: Entity,
+    pub to: Entity,
 }
 
 #[derive(Component, Debug)]
 pub struct Vertical {
-    pub constrained_by: Entity,
+    pub to: Entity,
 }

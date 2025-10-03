@@ -362,12 +362,10 @@ pub fn delete_dependent_lines(
     mut dots: Query<&Dot>,
 ) {
     for (entity, line) in lines.iter() {
-        if dots.get_mut(line.start).is_ok() {
-        } else {
+        if dots.get_mut(line.start).is_err() {
             commands.entity(entity).despawn();
         }
-        if dots.get_mut(line.end).is_ok() {
-        } else {
+        if dots.get_mut(line.end).is_err() {
             commands.entity(entity).despawn();
         }
     }
@@ -379,21 +377,19 @@ pub fn insert_horizontal_constraint(
     mut dots: Query<(Entity, &mut Transform), Without<Line>>,
 ) {
     for (entity, line, line_transform) in lines.iter_mut() {
-        commands.entity(entity).insert(Horizontal {
-            constrained_by: entity,
-        });
+        commands.entity(entity).insert(Horizontal { to: entity });
         if let Ok((start_entity, mut start_tf)) = dots.get_mut(line.start) {
-            commands.entity(start_entity).insert(Horizontal {
-                constrained_by: entity,
-            });
+            commands
+                .entity(start_entity)
+                .insert(Horizontal { to: entity });
             start_tf.translation.y = line_transform.translation.y;
         } else {
             continue;
         };
         if let Ok((end_entity, mut end_tf)) = dots.get_mut(line.end) {
-            commands.entity(end_entity).insert(Horizontal {
-                constrained_by: entity,
-            });
+            commands
+                .entity(end_entity)
+                .insert(Horizontal { to: entity });
             end_tf.translation.y = line_transform.translation.y;
         } else {
             continue;
@@ -407,21 +403,17 @@ pub fn insert_vertical_constraint(
     mut dots: Query<(Entity, &mut Transform), Without<Line>>,
 ) {
     for (entity, line, line_transform) in lines.iter_mut() {
-        commands.entity(entity).insert(Vertical {
-            constrained_by: entity,
-        });
+        commands.entity(entity).insert(Vertical { to: entity });
         if let Ok((start_entity, mut start_tf)) = dots.get_mut(line.start) {
-            commands.entity(start_entity).insert(Vertical {
-                constrained_by: entity,
-            });
+            commands
+                .entity(start_entity)
+                .insert(Vertical { to: entity });
             start_tf.translation.x = line_transform.translation.x;
         } else {
             continue;
         };
         if let Ok((end_entity, mut end_tf)) = dots.get_mut(line.end) {
-            commands.entity(end_entity).insert(Vertical {
-                constrained_by: entity,
-            });
+            commands.entity(end_entity).insert(Vertical { to: entity });
             end_tf.translation.x = line_transform.translation.x;
         } else {
             continue;

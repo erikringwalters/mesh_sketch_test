@@ -8,7 +8,10 @@ use super::line::{
     display_all_line_gizmos, display_current_line_gizmo, mark_moving_lines,
     update_line_mesh_transforms,
 };
-use super::movement::{is_dragging, move_horizontally, move_vertically, remove_moving};
+use super::movement::{
+    enforce_horizontal_constraint, is_dragging, move_horizontally, move_vertically, remove_moving,
+    update_moving_transforms,
+};
 use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
 
 // use super::arc::{ArcPlugin, handle_sketch_arc};
@@ -69,9 +72,10 @@ impl Plugin for SketchPlugin {
                     (
                         mark_moving_dots,
                         mark_moving_lines,
-                        // update_moving_transforms,
-                        move_horizontally,
-                        move_vertically,
+                        update_moving_transforms,
+                        enforce_horizontal_constraint,
+                        // move_horizontally,
+                        // move_vertically,
                     )
                         .run_if(is_dragging())
                         .chain(),
