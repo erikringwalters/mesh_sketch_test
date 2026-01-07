@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy = "0.17.0"
+bevy = "0.17.2"
+
+[target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
+bevy = { version = "0.17.2", default-features = false, features = ["x11", "bevy_winit", "bevy_render", "bevy_pbr"]}
+	#"bevy_ecs","bevy_time","bevy_input","bevy_window","bevy_render","bevy_core_pipeline","bevy_pbr","bevy_sprite","bevy_text","bevy_ui","bevy_asset","bevy_scene","bevy_picking",] }
 
 [profile]
 

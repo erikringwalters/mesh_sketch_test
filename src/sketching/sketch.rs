@@ -9,7 +9,7 @@ use super::line::{
     update_line_mesh_transforms,
 };
 use super::movement::{
-    enforce_horizontal_constraint, is_dragging, move_horizontally, move_vertically, remove_moving,
+    enforce_horizontal_constraint, enforce_vertical_constraint, is_dragging, remove_moving,
     update_moving_transforms,
 };
 use super::{dot::DotPlugin, line::LinePlugin, size::LINE_WIDTH};
@@ -73,6 +73,7 @@ impl Plugin for SketchPlugin {
                         mark_moving_dots,
                         mark_moving_lines,
                         update_moving_transforms,
+                        enforce_vertical_constraint,
                         enforce_horizontal_constraint,
                         // move_horizontally,
                         // move_vertically,

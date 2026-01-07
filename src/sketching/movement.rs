@@ -5,7 +5,7 @@ use crate::constraints::constraint::{Horizontal, Vertical};
 use crate::cursor::{Cursor, is_cursor_moving};
 
 use super::dot::Dot;
-use super::line::{Line, get_line_mesh_transform};
+use super::line::Line;
 #[derive(Component, Default)]
 #[component(storage = "SparseSet")]
 pub struct Moving;
@@ -40,25 +40,41 @@ pub fn enforce_horizontal_constraint(
         };
     }
 }
-pub fn move_horizontally(
-    cursor: Res<Cursor>,
-    mut query: Query<&mut Transform, (With<Moving>, Without<Vertical>)>,
+
+pub fn enforce_vertical_constraint(
+    mut lines: Query<&Line, With<Vertical>>,
+    mut dots: Query<&mut Transform, With<Dot>>,
 ) {
-    let delta = cursor.position - cursor.prev_position;
-    for mut transform in query.iter_mut() {
-        transform.translation.x += delta.x;
+    for line in lines.iter_mut() {
+        if let Ok([mut start_tf, mut end_tf]) = dots.get_many_mut([line.start, line.end]) {
+            let avg_x = (start_tf.translation.x + end_tf.translation.x) / 2.0;
+            start_tf.translation.x = avg_x;
+            end_tf.translation.x = avg_x;
+        } else {
+            continue;
+        };
     }
 }
 
-pub fn move_vertically(
-    cursor: Res<Cursor>,
-    mut query: Query<&mut Transform, (With<Moving>, Without<Horizontal>)>,
-) {
-    let delta = cursor.position - cursor.prev_position;
-    for mut transform in query.iter_mut() {
-        transform.translation.y += delta.y;
-    }
-}
+// pub fn move_horizontally(
+//     cursor: Res<Cursor>,
+//     mut query: Query<&mut Transform, (With<Moving>, Without<Vertical>)>,
+// ) {
+//     let delta = cursor.position - cursor.prev_position;
+//     for mut transform in query.iter_mut() {
+//         transform.translation.x += delta.x;
+//     }
+// }
+
+// pub fn move_vertically(
+//     cursor: Res<Cursor>,
+//     mut query: Query<&mut Transform, (With<Moving>, Without<Horizontal>)>,
+// ) {
+//     let delta = cursor.position - cursor.prev_position;
+//     for mut transform in query.iter_mut() {
+//         transform.translation.y += delta.y;
+//     }
+// }
 
 pub fn is_dragging() -> impl SystemCondition<()> {
     input_pressed(MouseButton::Left).and(is_cursor_moving)
